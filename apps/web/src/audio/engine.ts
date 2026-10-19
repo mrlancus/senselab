@@ -15,14 +15,24 @@ export interface MicInfo {
   outputLatencyS: number | null;
 }
 
-type Listener = (chunk: Float32Array) => void;
+/** `frame` is the AudioContext frame index of `chunk[0]`. */
+type Listener = (chunk: Float32Array, frame: number) => void;
+
+export interface PlayRecordResult {
+  recorded: Float32Array;
+  /**
+   * Index in `recorded` of the sample captured at the moment playback was scheduled to
+   * start. A sound's lag in the recording minus this is the true round-trip latency.
+   */
+  emitIndex: number;
+}
 
 class AudioEngine {
   ctx: AudioContext | null = null;
   private stream: MediaStream | null = null;
   private node: AudioWorkletNode | null = null;
   private listeners = new Set<Listener>();
-  /** Samples recorded since the worklet started; maps to ctx time via `startFrameTime`. */
+  /** AudioContext frame just after the last sample received from the worklet. */
   framesSeen = 0;
   info: MicInfo | null = null;
 
@@ -72,7 +82,7 @@ class AudioEngine {
       });
       this.node.port.onmessage = (e: MessageEvent<{ frame: number; samples: Float32Array }>) => {
         this.framesSeen = e.data.frame + e.data.samples.length;
-        for (const l of this.listeners) l(e.data.samples);
+        for (const l of this.listeners) l(e.data.samples, e.data.frame);
       };
       // The worklet must be pulled by the graph to run; a muted gain keeps the mic silent.
       const mute = this.ctx.createGain();
@@ -116,8 +126,14 @@ class AudioEngine {
     });
   }
 
-  /** Plays samples through the speaker; resolves when playback ends. */
+  /** Plays samples through the speaker `delayS` from now; resolves when playback ends. */
   play(samples: Float32Array, delayS = 0.05): Promise<void> {
+    if (!this.ctx) throw new Error('Audio not started');
+    return this.playAt(samples, this.ctx.currentTime + delayS);
+  }
+
+  /** Plays samples starting at AudioContext time `when`; resolves when playback ends. */
+  playAt(samples: Float32Array, when: number): Promise<void> {
     const ctx = this.ctx;
     if (!ctx) throw new Error('Audio not started');
     const buf = ctx.createBuffer(1, samples.length, ctx.sampleRate);
@@ -127,18 +143,35 @@ class AudioEngine {
     node.connect(ctx.destination);
     return new Promise((resolve) => {
       node.onended = () => resolve();
-      node.start(ctx.currentTime + delayS);
+      node.start(when);
     });
   }
 
-  /** Plays while recording, with `padS` of extra capture either side. */
-  async playAndRecord(samples: Float32Array, padS = 0.3): Promise<Float32Array> {
-    return this.capture((done) => {
-      setTimeout(async () => {
-        await this.play(samples);
-        setTimeout(done, padS * 1000);
-      }, padS * 1000);
+  /**
+   * Plays while recording, with about `padS` of extra capture either side. Playback is
+   * scheduled on the AudioContext clock and the recording is stamped with context frames,
+   * so `emitIndex` is exact (no timer jitter).
+   */
+  async playAndRecord(samples: Float32Array, padS = 0.3): Promise<PlayRecordResult> {
+    const ctx = this.ctx;
+    if (!ctx) throw new Error('Audio not started');
+    const chunks: Float32Array[] = [];
+    let firstFrame: number | null = null;
+    const off = this.onChunk((c, frame) => {
+      firstFrame ??= frame;
+      chunks.push(c);
     });
+    try {
+      const when = ctx.currentTime + padS;
+      await this.playAt(samples, when);
+      // Output and input latency plus the worklet batch mean the tail arrives late.
+      await new Promise((r) => setTimeout(r, padS * 1000));
+      const recorded = concat(chunks);
+      const emitIndex = Math.round(when * ctx.sampleRate) - (firstFrame ?? 0);
+      return { recorded, emitIndex };
+    } finally {
+      off();
+    }
   }
 
   async stop() {

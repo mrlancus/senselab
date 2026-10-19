@@ -28,6 +28,8 @@ interface SweepRun {
   correlation: Float32Array;
   sampleRate: number;
   sg: Spectrogram | null;
+  /** Recording index where playback was scheduled to start. */
+  emitIndex: number;
 }
 
 export function SensorCheck() {
@@ -66,7 +68,7 @@ export function SensorCheck() {
       const noise = await audio.record(0.6);
       setSweepState('sweep');
       const emitted = makeSweep(sr, SWEEP_S);
-      const recorded = await audio.playAndRecord(emitted, PAD_S);
+      const { recorded, emitIndex } = await audio.playAndRecord(emitted, PAD_S);
       setSweepState('analyse');
       const { analysis, correlation } = await runDsp('analyzeSweep', {
         sweep: sweepOptions(sr, SWEEP_S),
@@ -75,13 +77,13 @@ export function SensorCheck() {
         noise,
       });
       const sg = debug ? await runDsp('spectrogram', recorded, sr, 1024, 512) : null;
-      setRun({ analysis, recorded, noise, correlation, sampleRate: sr, sg });
+      setRun({ analysis, recorded, noise, correlation, sampleRate: sr, sg, emitIndex });
       setSweepState('done');
       if (analysis.heard) {
         const p: AudioProfile = {
           measuredAt: new Date().toISOString(),
           sampleRate: sr,
-          latencyS: analysis.latencyS - PAD_S,
+          latencyS: analysis.latencyS - emitIndex / sr,
           usableMaxHz: analysis.usableMaxHz,
           chirp: analysis.recommended,
           bands: analysis.bands,
@@ -255,7 +257,10 @@ function SweepDebug({ run }: { run: SweepRun }) {
       <Waveform
         data={run.recorded}
         sampleRate={run.sampleRate}
-        markers={[{ x: a.latencyS, label: 'sweep start' }]}
+        markers={[
+          { x: run.emitIndex / run.sampleRate, label: 'play' },
+          { x: a.latencyS, label: 'heard' },
+        ]}
       />
       {run.sg && (
         <>
@@ -291,8 +296,10 @@ function SweepDebug({ run }: { run: SweepRun }) {
         </tbody>
       </table>
       <p className="mono small">
-        latency (incl. {PAD_S * 1000} ms pad) {(a.latencyS * 1000).toFixed(1)} ms · score{' '}
-        {a.matchScore.toFixed(3)} · sr {run.sampleRate}
+        round-trip latency {((a.latencyS - run.emitIndex / run.sampleRate) * 1000).toFixed(1)} ms
+        (sweep at {(a.latencyS * 1000).toFixed(1)} ms, scheduled at{' '}
+        {((run.emitIndex / run.sampleRate) * 1000).toFixed(1)} ms) · score {a.matchScore.toFixed(3)}{' '}
+        · sr {run.sampleRate}
       </p>
       <SaveRecording
         samples={run.recorded}
@@ -327,10 +334,11 @@ function MotionCard() {
     let last = 0;
     const onMotion = (e: DeviceMotionEvent) => {
       const c = count.current;
-      if (!c.t0) c.t0 = performance.now();
-      c.n++;
       const now = performance.now();
-      if (now - last < 100) return;
+      if (!c.t0) c.t0 = now;
+      c.n++;
+      // n events span n − 1 intervals.
+      if (now - last < 100 || c.n < 2) return;
       last = now;
       const g = e.accelerationIncludingGravity;
       const r = e.rotationRate;
@@ -339,7 +347,7 @@ function MotionCard() {
         y: g?.y ?? 0,
         z: g?.z ?? 0,
         rot: Math.hypot(r?.alpha ?? 0, r?.beta ?? 0, r?.gamma ?? 0),
-        hz: (c.n / (now - c.t0)) * 1000,
+        hz: ((c.n - 1) / (now - c.t0)) * 1000,
       });
     };
     window.addEventListener('devicemotion', onMotion);
