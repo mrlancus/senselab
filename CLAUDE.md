@@ -75,6 +75,9 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
   `--use-fake-device-for-media-stream` exercises the flows (the fake mic only beeps).
   Add `--use-file-for-fake-audio-capture=x.wav` to feed synthetic recordings; see
   `scripts/e2e/`.
+- Echo: `components/EchoCapture.tsx` owns the free-air reference flow, the ping and the
+  debug view; `lib/echo.ts` keeps the per-device band, reference and air temperature.
+  Keep `ECHO_WINDOW_CM` fixed, because stored references must match the window length.
 - Data loading: `useAsync(fn, key)` (`lib/useAsync.ts`). Routes go in the `screens` list in
   `App.tsx`; the first match wins.
 
@@ -83,5 +86,5 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
 - [x] Step 1: scaffold, CI, Worker + D1 + R2, hello deploy
 - [x] Step 2: sensor check screen + `packages/dsp` core
 - [x] Step 3: calibrated tap liquid level (synthetic-verified; awaiting a real-bucket test)
-- [ ] Step 4: echo ranging
+- [x] Step 4: echo ranging + sonar ruler (synthetic-verified; awaiting a real-bucket test)
 - [ ] Step 5: camera dimension estimate

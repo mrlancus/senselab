@@ -72,11 +72,12 @@ pnpm build
 
 ## Modes
 
-| Mode                                  | Status  | Notes                         |
-| ------------------------------------- | ------- | ----------------------------- |
-| Sensor check                          | planned | [docs/sensor-check.md](docs/) |
-| Liquid level: calibrated tap          | planned | [docs/tap-level.md](docs/)    |
-| Liquid level: echo ranging            | planned |                               |
-| Liquid level: camera dimensions       | planned |                               |
-| Knock ID, room acoustics, sonar ruler | later   |                               |
-| Metal finder, sound alerts, presence  | later   |                               |
+| Mode                                 | Status                                           | Notes                                        |
+| ------------------------------------ | ------------------------------------------------ | -------------------------------------------- |
+| Sensor check                         | ready                                            | [docs/sensor-check.md](docs/sensor-check.md) |
+| Liquid level: calibrated tap         | ready (synthetic-verified; awaits a real bucket) | [docs/tap-level.md](docs/tap-level.md)       |
+| Liquid level: echo ranging           | ready (synthetic-verified; awaits a real bucket) | [docs/echo-level.md](docs/echo-level.md)     |
+| Sonar ruler                          | ready (synthetic-verified)                       | [docs/ruler.md](docs/ruler.md)               |
+| Liquid level: camera                 | planned                                          |                                              |
+| Knock ID, room acoustics             | later                                            |                                              |
+| Metal finder, sound alerts, presence | later                                            |                                              |

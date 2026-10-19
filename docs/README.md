@@ -6,3 +6,5 @@ real phones.
 - [architecture.md](architecture.md): how the pieces fit together
 - [sensor-check.md](sensor-check.md): per-device speaker/mic response, chirp band choice
 - [tap-level.md](tap-level.md): liquid level from the pitch of a tap, per-container calibration
+- [echo-level.md](echo-level.md): liquid level by echo ranging (chirps, matched filter, CLEAN)
+- [ruler.md](ruler.md): sonar ruler, the echo engine pointed at a wall
