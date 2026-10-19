@@ -1,3 +1,5 @@
+import type React from 'react';
+
 /**
  * Tiny looping SVG animations for the how-to steps. All motion is CSS (howto.css) and is
  * switched off under prefers-reduced-motion, leaving a still that still reads correctly.
@@ -159,6 +161,74 @@ export function EmptyBucketAnim() {
       <Bucket level={0} />
       <text x="80" y="66" className="a-label a-blink" textAnchor="middle">
         0 L
+      </text>
+    </svg>
+  );
+}
+
+/** A ping (short arc) travelling `travel` units along y (or x), then its echo coming back. */
+function Ping({
+  d,
+  travel,
+  horizontal = false,
+}: {
+  d: string;
+  travel: number;
+  horizontal?: boolean;
+}) {
+  const style = { '--travel': `${travel}px` } as React.CSSProperties;
+  return (
+    <g className={horizontal ? 'h' : ''}>
+      <path d={d} className="a-ping" style={style} />
+      {/* CSS transforms replace the transform attribute, so offset with a wrapper. */}
+      <g transform={horizontal ? `translate(${travel} 0)` : `translate(0 ${travel})`}>
+        <path d={d} className="a-ping back" style={style} />
+      </g>
+    </g>
+  );
+}
+
+/** Echo: phone upright over the bucket, bottom edge down; a chirp goes down and comes back. */
+export function PhoneOverBucketAnim({ level = 0.45 }: { level?: number }) {
+  const water = 88 - level * 58;
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <Bucket level={level} />
+      <Phone x={70} y={-10} w={20} h={36} />
+      <Ping d="M70 31 q10 5 20 0" travel={water - 33} />
+      <path d="M96 28 v-4" className="a-arc" />
+      <text x="100" y="24" className="a-label">
+        ≈ rim
+      </text>
+    </svg>
+  );
+}
+
+/** Echo reference: the phone held up in open air, the chirp spreading out with nothing to return it. */
+export function FreeAirAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <Phone x={70} y={6} w={20} h={36} />
+      <Ripples cx={80} cy={46} />
+      <text x="80" y="94" className="a-label" textAnchor="middle">
+        nothing below for 1 m
+      </text>
+    </svg>
+  );
+}
+
+/** Sonar ruler: phone's bottom edge pointed at a wall; ping out and back. */
+export function PhoneAtWallAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <rect x="140" y="8" width="10" height="84" className="a-table" />
+      <g transform="rotate(-90 40 50)">
+        <Phone x={30} y={20} w={20} h={36} />
+      </g>
+      <Ping d="M62 40 q5 10 0 20" travel={72} horizontal />
+      <path d="M62 80 H138" className="a-arc" />
+      <text x="100" y="94" className="a-label" textAnchor="middle">
+        distance
       </text>
     </svg>
   );

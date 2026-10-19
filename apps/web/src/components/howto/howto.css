@@ -309,3 +309,90 @@
     opacity: 1;
   }
 }
+
+/* Echo: a ping travels out by --travel, then its echo travels back. */
+.a-ping {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  animation: a-ping 1.6s ease-in infinite;
+}
+.a-ping.back {
+  stroke: var(--water);
+  animation-name: a-ping-back;
+}
+.h .a-ping {
+  animation-name: a-ping-h;
+}
+.h .a-ping.back {
+  animation-name: a-ping-h-back;
+}
+@keyframes a-ping {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  5%,
+  40% {
+    opacity: 1;
+  }
+  45%,
+  100% {
+    transform: translateY(var(--travel));
+    opacity: 0;
+  }
+}
+@keyframes a-ping-back {
+  0%,
+  45% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  50%,
+  85% {
+    opacity: 1;
+  }
+  90%,
+  100% {
+    transform: translateY(calc(-1 * var(--travel)));
+    opacity: 0;
+  }
+}
+@keyframes a-ping-h {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  5%,
+  40% {
+    opacity: 1;
+  }
+  45%,
+  100% {
+    transform: translateX(var(--travel));
+    opacity: 0;
+  }
+}
+@keyframes a-ping-h-back {
+  0%,
+  45% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  50%,
+  85% {
+    opacity: 1;
+  }
+  90%,
+  100% {
+    transform: translateX(calc(-1 * var(--travel)));
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .a-ping {
+    opacity: 0.85;
+    transform: none;
+  }
+}
