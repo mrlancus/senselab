@@ -78,7 +78,7 @@ pnpm build
 | Liquid level: calibrated tap         | ready (synthetic-verified; awaits a real bucket) | [docs/tap-level.md](docs/tap-level.md)           |
 | Liquid level: echo ranging           | ready (synthetic-verified; awaits a real bucket) | [docs/echo-level.md](docs/echo-level.md)         |
 | Sonar ruler                          | ready (synthetic-verified)                       | [docs/ruler.md](docs/ruler.md)                   |
-| Liquid level: camera                 | planned                                          |                                                  |
+| Liquid level: camera                 | ready (synthetic-verified; AR experimental)      | [docs/camera-level.md](docs/camera-level.md)     |
 | Room acoustics (RT60)                | ready (synthetic-verified)                       | [docs/room-acoustics.md](docs/room-acoustics.md) |
 | Knock ID                             | later                                            |                                                  |
 | Metal finder, sound alerts, presence | later                                            |                                                  |

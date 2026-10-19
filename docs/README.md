@@ -9,3 +9,4 @@ real phones.
 - [echo-level.md](echo-level.md): liquid level by echo ranging (chirps, matched filter, CLEAN)
 - [ruler.md](ruler.md): sonar ruler, the echo engine pointed at a wall
 - [room-acoustics.md](room-acoustics.md): RT60 from a clap (Schroeder integration, octave bands)
+- [camera-level.md](camera-level.md): dimensions and waterline from photos with a card or A4 for scale; AR tape (experimental)
