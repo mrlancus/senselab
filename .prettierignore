@@ -1,0 +1,5 @@
+dist
+coverage
+.wrangler
+pnpm-lock.yaml
+apps/api/worker-configuration.d.ts
