@@ -30,7 +30,9 @@ export function magnitudeSpectrum(
   const mags = new Float64Array(bins);
   const scale = 2 / (x.length * coherentGain(w));
   for (let k = 0; k < bins; k++) mags[k] = Math.hypot(re[k], im[k]) * scale;
+  // DC and Nyquist have no negative-frequency twin, so they aren't doubled.
   mags[0] /= 2;
+  mags[bins - 1] /= 2;
   const binHz = sampleRate / n;
   const freqs = new Float64Array(bins);
   for (let k = 0; k < bins; k++) freqs[k] = k * binHz;

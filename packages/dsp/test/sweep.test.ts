@@ -69,5 +69,17 @@ describe('sweep analysis', () => {
       f1: 6000,
       kind: 'audible',
     });
+    // A good run only above 8 kHz must not be clipped to a zero-width band.
+    expect(pickChirpBand([band(8000, 10000, 30), band(10000, 12000, 30)])).toEqual({
+      f0: 8000,
+      f1: 12000,
+      kind: 'audible',
+    });
+    // 1–3 kHz clips to 2–3 kHz (too narrow), so the unclipped run is used.
+    expect(pickChirpBand([band(1000, 2000, 30), band(2000, 3000, 30)])).toEqual({
+      f0: 1000,
+      f1: 3000,
+      kind: 'audible',
+    });
   });
 });

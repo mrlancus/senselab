@@ -82,5 +82,8 @@ export function findDelay(
     sEnergy += signal[k] * signal[k];
   }
   const denom = Math.sqrt(tEnergy * sEnergy);
-  return { lag: i + offset, score: denom > 0 ? Math.abs(r[i]) / denom : 0 };
+  // With the envelope, score its peak: the raw correlation at that index can sit on a
+  // carrier zero crossing (a 19 kHz chirp flips sign every ~1.3 samples at 48 kHz).
+  const peak = opts.useEnvelope ? y[i] : Math.abs(r[i]);
+  return { lag: i + offset, score: denom > 0 ? Math.min(1, peak / denom) : 0 };
 }
