@@ -46,6 +46,8 @@ Microphone, camera and motion sensors need HTTPS on a phone. To test on a real d
 PR preview URL or production, or tunnel your dev server (for example
 `cloudflared tunnel --url http://localhost:5173`).
 
+Browser end-to-end checks with synthetic audio live in `scripts/e2e/` (see its README).
+
 Checks (CI runs the same ones):
 
 ```sh

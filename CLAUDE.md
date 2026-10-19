@@ -73,11 +73,15 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
   for fixtures.
 - Headless check: `wrangler dev` in apps/api serves the built web app. Playwright with
   `--use-fake-device-for-media-stream` exercises the flows (the fake mic only beeps).
+  Add `--use-file-for-fake-audio-capture=x.wav` to feed synthetic recordings; see
+  `scripts/e2e/`.
+- Data loading: `useAsync(fn, key)` (`lib/useAsync.ts`). Routes go in the `screens` list in
+  `App.tsx`; the first match wins.
 
 ## Status
 
 - [x] Step 1: scaffold, CI, Worker + D1 + R2, hello deploy
 - [x] Step 2: sensor check screen + `packages/dsp` core
-- [ ] Step 3: calibrated tap liquid level
+- [x] Step 3: calibrated tap liquid level (synthetic-verified; awaiting a real-bucket test)
 - [ ] Step 4: echo ranging
 - [ ] Step 5: camera dimension estimate
