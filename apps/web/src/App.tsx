@@ -5,11 +5,19 @@ import { Link, match, usePath } from './lib/router';
 import { modes } from './modes';
 import { ComingSoon } from './screens/ComingSoon';
 import { Home } from './screens/Home';
+import { ContainerDetail } from './screens/level/ContainerDetail';
+import { ContainerForm } from './screens/level/ContainerForm';
+import { LevelHome } from './screens/level/LevelHome';
 import { SensorCheck } from './screens/SensorCheck';
 
-const screens: Record<string, () => ReactNode> = {
-  '/sensor-check': () => <SensorCheck />,
-};
+// First match wins, so literal paths go before parameterised ones.
+const screens: [string, (p: Record<string, string>) => ReactNode][] = [
+  ['/sensor-check', () => <SensorCheck />],
+  ['/level', () => <LevelHome />],
+  ['/level/new', () => <ContainerForm />],
+  ['/level/:id/edit', (p) => <ContainerForm id={p.id} />],
+  ['/level/:id', (p) => <ContainerDetail key={p.id} id={p.id!} />],
+];
 
 export function App() {
   const path = usePath();
@@ -39,8 +47,9 @@ export function App() {
 
 function route(path: string) {
   if (path === '/') return <Home />;
-  for (const [pattern, render] of Object.entries(screens)) {
-    if (match(pattern, path)) return render();
+  for (const [pattern, render] of screens) {
+    const params = match(pattern, path);
+    if (params) return render(params);
   }
   for (const m of modes) {
     if (match(m.path, path)) return <ComingSoon mode={m} />;

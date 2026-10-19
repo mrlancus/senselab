@@ -19,7 +19,7 @@ export const modes: ModeInfo[] = [
     title: 'Liquid level',
     blurb: 'How many litres are in that bucket? Tap it, ping it, or film it.',
     icon: '🪣',
-    status: 'soon',
+    status: 'ready',
   },
   {
     path: '/knock',
