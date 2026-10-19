@@ -13,3 +13,5 @@ export * from './sweep';
 export * from './tap';
 export * from './wav';
 export * from './window';
+export * from './echo';
+export * from './echo-level';
