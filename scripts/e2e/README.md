@@ -26,3 +26,11 @@ also replays 10 ms chunks, so the debug plots show a ghost of the direct path at
 samples (≈ 172 cm) and the repeat spread is larger than on a real phone.
 
 `render-icons.mjs` (one level up) regenerates the PWA icons from `apps/web/public/icon.svg`.
+
+Room acoustics (RT60):
+
+```sh
+python3 scripts/e2e/gen-room.py /tmp/room && node scripts/e2e/room-flow.mjs /tmp/room
+```
+
+Expected: `RT60 ≈ 0.60 s`, with every band within its "±" scatter.
