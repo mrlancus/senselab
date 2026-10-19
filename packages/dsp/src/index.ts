@@ -10,5 +10,6 @@ export * from './rng';
 export * from './spectrum';
 export * from './stats';
 export * from './sweep';
+export * from './tap';
 export * from './wav';
 export * from './window';
