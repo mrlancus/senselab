@@ -8,3 +8,4 @@ real phones.
 - [tap-level.md](tap-level.md): liquid level from the pitch of a tap, per-container calibration
 - [echo-level.md](echo-level.md): liquid level by echo ranging (chirps, matched filter, CLEAN)
 - [ruler.md](ruler.md): sonar ruler, the echo engine pointed at a wall
+- [room-acoustics.md](room-acoustics.md): RT60 from a clap (Schroeder integration, octave bands)

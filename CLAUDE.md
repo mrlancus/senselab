@@ -88,3 +88,4 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
 - [x] Step 3: calibrated tap liquid level (synthetic-verified; awaiting a real-bucket test)
 - [x] Step 4: echo ranging + sonar ruler (synthetic-verified; awaiting a real-bucket test)
 - [ ] Step 5: camera dimension estimate
+- [x] Room acoustics RT60 (synthetic-verified)
