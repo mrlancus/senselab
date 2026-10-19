@@ -89,6 +89,11 @@ class AudioEngine {
       mute.gain.value = 0;
       src.connect(this.node).connect(mute).connect(this.ctx.destination);
     }
+    try {
+      localStorage.setItem(LAST_RATE_KEY, String(this.ctx.sampleRate));
+    } catch {
+      /* private mode */
+    }
     const track = this.stream.getAudioTracks()[0]!;
     this.info = {
       sampleRate: this.ctx.sampleRate,
@@ -181,6 +186,18 @@ class AudioEngine {
     this.stream = null;
     this.info = null;
     await this.ctx?.suspend();
+  }
+}
+
+const LAST_RATE_KEY = 'senselab.lastSampleRate';
+
+/** The sample rate the mic ran at last time, so per-rate settings can show before a tap. */
+export function lastSampleRate(): number | null {
+  try {
+    const v = Number(localStorage.getItem(LAST_RATE_KEY));
+    return v > 0 ? v : null;
+  } catch {
+    return null;
   }
 }
 

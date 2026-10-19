@@ -1,12 +1,18 @@
 import {
   ampToDb,
+  analyzeEcho,
   analyzeSweep,
   analyzeTaps,
   crossCorrelate,
+  echoResponse,
   envelope,
   magnitudeSpectrum,
+  makeEchoTrain,
+  speedOfSound,
   spectrogram,
   summarizeTaps,
+  type EchoAnalysisOptions,
+  type EchoConfig,
   type SweepAnalysisInput,
 } from '@senselab/dsp';
 
@@ -39,6 +45,27 @@ export const handlers = {
       };
     });
     return { taps, onsetsS, summary, spectra };
+  },
+  echo: (
+    recorded: Float32Array,
+    emitIndex: number,
+    cfg: EchoConfig,
+    windowCm: number,
+    opts: Omit<EchoAnalysisOptions, 'speed'> & { tempC?: number } = {},
+  ) => {
+    const train = makeEchoTrain(cfg);
+    const speed = speedOfSound(opts.tempC ?? 20);
+    const resp = echoResponse(recorded, train, { emitIndex, maxCm: windowCm });
+    const analysis = analyzeEcho(resp, train, { ...opts, speed });
+    return {
+      analysis,
+      corr: resp.corr,
+      pre: resp.pre,
+      directAbs: resp.directAbs,
+      repeatsUsed: resp.perRepeat.length,
+      speed,
+      samplesPerCm: (2 * cfg.sampleRate) / (100 * speed),
+    };
   },
 };
 
