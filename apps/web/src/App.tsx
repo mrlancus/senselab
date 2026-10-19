@@ -5,6 +5,7 @@ import { Link, match, usePath } from './lib/router';
 import { modes } from './modes';
 import { ComingSoon } from './screens/ComingSoon';
 import { Home } from './screens/Home';
+import { CameraMeasure } from './screens/level/CameraMeasure';
 import { ContainerDetail } from './screens/level/ContainerDetail';
 import { ContainerForm } from './screens/level/ContainerForm';
 import { LevelHome } from './screens/level/LevelHome';
@@ -18,6 +19,8 @@ const screens: [string, (p: Record<string, string>) => ReactNode][] = [
   ['/level', () => <LevelHome />],
   ['/level/new', () => <ContainerForm />],
   ['/level/:id/edit', (p) => <ContainerForm id={p.id} />],
+  ['/level/:id/camera', (p) => <CameraMeasure id={p.id!} view="dimensions" />],
+  ['/level/:id/waterline', (p) => <CameraMeasure id={p.id!} view="waterline" />],
   ['/level/:id', (p) => <ContainerDetail key={p.id} id={p.id!} />],
   ['/ruler', () => <Ruler />],
   ['/room', () => <Room />],

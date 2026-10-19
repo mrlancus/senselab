@@ -17,7 +17,7 @@ export const modes: ModeInfo[] = [
   {
     path: '/level',
     title: 'Liquid level',
-    blurb: 'How many litres are in that bucket? Tap it or ping it (camera coming).',
+    blurb: 'How many litres are in that bucket? Tap it, ping it, or photograph it.',
     icon: '🪣',
     status: 'ready',
   },
