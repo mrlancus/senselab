@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   analyzeTaps,
+  ASSUMED_K,
+  ASSUMED_K_RANGE,
   estimateLitresFromTaps,
   fitTapCalibration,
   summarizeTaps,
@@ -69,12 +71,41 @@ describe('tap calibration', () => {
     expect(fit.searchBand[0]).toBeLessThan(fit.rangeHz[0]);
   });
 
-  it('two points (empty + one) use k = 1 and are still monotone', () => {
+  it('two points (empty + one) assume k = 2 and report the shape uncertainty', () => {
     const fit = fitTapCalibration(cal.slice(0, 2));
     expect(fit.model.kind).toBe('power');
+    if (fit.model.kind === 'power') {
+      expect(fit.model.k).toBe(ASSUMED_K);
+      expect(fit.model.kRange).toEqual(ASSUMED_K_RANGE);
+    }
     expect(fit.predict(pitchAt(5))).toBeCloseTo(5, 6);
     expect(fit.predict(pitchAt(2))).toBeGreaterThan(0);
     expect(fit.predict(pitchAt(2))).toBeLessThan(5);
+
+    const at = (l: number) =>
+      estimateLitresFromTaps(
+        fit,
+        { frequency: pitchAt(l), spreadHz: 0.5, used: 5, rejected: 0, snrDb: 40 },
+        bucket.capacity,
+      );
+    // At the calibrated fill the shape doesn't matter; away from it the ± covers the truth.
+    expect(at(5).shapeUncertaintyLitres).toBeLessThan(1e-6);
+    for (const l of [1.5, 2.5, 8]) {
+      const e = at(l);
+      expect(e.shapeUncertaintyLitres).toBeGreaterThan(0.1);
+      expect(Math.abs(e.litres - l)).toBeLessThanOrEqual(e.uncertaintyLitres);
+    }
+    expect(at(2.5).confidence).toBeLessThan(at(5).confidence);
+  });
+
+  it('three points measure k, so there is no shape uncertainty', () => {
+    const fit = fitTapCalibration(cal);
+    const e = estimateLitresFromTaps(
+      fit,
+      { frequency: pitchAt(2.5), spreadHz: 0.5, used: 5, rejected: 0, snrDb: 40 },
+      bucket.capacity,
+    );
+    expect(e.shapeUncertaintyLitres).toBe(0);
   });
 
   it('without an empty point falls back to monotone interpolation', () => {
@@ -103,7 +134,7 @@ describe('tap calibration', () => {
     expect(() =>
       fitTapCalibration([
         { litres: 0, frequency: 800 },
-        { litres: 5, frequency: 800.5 },
+        { litres: 5, frequency: 795 }, // 0.6%: below MIN_PITCH_CHANGE
       ]),
     ).toThrow(/same pitch/);
   });

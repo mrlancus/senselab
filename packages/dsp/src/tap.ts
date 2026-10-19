@@ -102,8 +102,11 @@ export interface TapCalibrationPoint {
 }
 
 export type TapModel =
-  /** (f₀/f)² − 1 = α·Vᵏ, physics-shaped; needs an empty (0 L) point. */
-  | { kind: 'power'; f0: number; alpha: number; k: number }
+  /**
+   * (f₀/f)² − 1 = α·Vᵏ, physics-shaped; needs an empty (0 L) point. With only one filled
+   * point k can't be measured: `kRange` then holds the plausible range it was assumed from.
+   */
+  | { kind: 'power'; f0: number; alpha: number; k: number; kRange?: [number, number] }
   /** Monotone cubic through the points (no empty point, or the power law didn't fit). */
   | { kind: 'interp'; points: TapCalibrationPoint[] };
 
@@ -119,6 +122,22 @@ export interface TapFit {
   searchBand: [number, number];
 }
 
+/**
+ * Smallest empty-to-full pitch change we accept (1%). Taps on one spot scatter by about
+ * 0.2–0.5%, so a smaller change leaves only a couple of distinguishable fill levels.
+ */
+export const MIN_PITCH_CHANGE = 0.01;
+
+/**
+ * Exponent assumed when there is only one filled calibration point, and the range it could
+ * plausibly take. k = 1 is added mass proportional to volume. French's wine glass,
+ * (h/H)⁴, is k ≈ 4 for a near-cylindrical vessel, because the wall moves most near the rim
+ * and liquid low down barely loads the mode. k = 2 is the geometric middle; the range is
+ * folded into the reported uncertainty until a second fill measures k.
+ */
+export const ASSUMED_K = 2;
+export const ASSUMED_K_RANGE: [number, number] = [1, 4];
+
 /** Fits litres = g(frequency) from calibration points. Needs ≥2 distinct frequencies. */
 export function fitTapCalibration(points: TapCalibrationPoint[]): TapFit {
   const pts = mergeDuplicates(points);
@@ -126,7 +145,7 @@ export function fitTapCalibration(points: TapCalibrationPoint[]): TapFit {
   const freqs = pts.map((p) => p.frequency);
   const fLo = Math.min(...freqs);
   const fHi = Math.max(...freqs);
-  if (fHi - fLo < 0.002 * fHi) {
+  if (fHi - fLo < MIN_PITCH_CHANGE * fHi) {
     throw new Error(
       'Calibration points have the same pitch; this container may not be tap-measurable',
     );
@@ -167,8 +186,9 @@ function fitPower(pts: TapCalibrationPoint[]): TapModel | null {
   const ys = filled.map((p) => (f0 / p.frequency) ** 2 - 1);
   if (ys.some((y) => y <= 0)) return null; // pitch didn't drop with fill: not this physics
   if (filled.length === 1) {
-    // One filled point: assume added mass ∝ volume (k = 1).
-    return { kind: 'power', f0, alpha: ys[0] / filled[0].litres, k: 1 };
+    // One filled point pins α for a given k but can't measure k (see ASSUMED_K).
+    const k = ASSUMED_K;
+    return { kind: 'power', f0, alpha: ys[0] / filled[0].litres ** k, k, kRange: ASSUMED_K_RANGE };
   }
   const fit = linearFit(
     filled.map((p) => Math.log(p.litres)),
@@ -179,14 +199,15 @@ function fitPower(pts: TapCalibrationPoint[]): TapModel | null {
   return { kind: 'power', f0, alpha: Math.exp(fit.intercept), k };
 }
 
+function powerPredictor(f0: number, alpha: number, k: number) {
+  return (f: number) => {
+    const y = (f0 / f) ** 2 - 1;
+    return y <= 0 ? 0 : Math.pow(y / alpha, 1 / k);
+  };
+}
+
 function predictor(model: TapModel): (f: number) => number {
-  if (model.kind === 'power') {
-    const { f0, alpha, k } = model;
-    return (f) => {
-      const y = (f0 / f) ** 2 - 1;
-      return y <= 0 ? 0 : Math.pow(y / alpha, 1 / k);
-    };
-  }
+  if (model.kind === 'power') return powerPredictor(model.f0, model.alpha, model.k);
   const interp = pchip(
     model.points.map((p) => p.frequency),
     model.points.map((p) => p.litres),
@@ -196,8 +217,13 @@ function predictor(model: TapModel): (f: number) => number {
 
 export interface TapEstimate {
   litres: number;
-  /** ± litres, from tap-to-tap pitch spread propagated through the curve. */
+  /**
+   * ± litres: tap-to-tap pitch spread propagated through the curve, plus the calibration
+   * residual, plus (one-fill calibrations) the spread over the assumed exponent range.
+   */
   uncertaintyLitres: number;
+  /** Litres spread caused by not knowing the curve's exponent (one-fill calibrations). */
+  shapeUncertaintyLitres: number;
   /** 0..1 heuristic (see docs/tap-level.md). */
   confidence: number;
   inRange: boolean;
@@ -214,7 +240,9 @@ export function estimateLitresFromTaps(
   // Slope of the curve by central difference.
   const h = Math.max(0.5, f * 0.002);
   const slope = Math.abs(fit.predict(f + h) - fit.predict(f - h)) / (2 * h);
-  const uncertaintyLitres = slope * Math.max(summary.spreadHz, f * 0.002) + fit.residualRmsLitres;
+  const shapeUncertaintyLitres = shapeSpread(fit, f, cap);
+  const uncertaintyLitres =
+    slope * Math.max(summary.spreadHz, f * 0.002) + fit.residualRmsLitres + shapeUncertaintyLitres;
   const [lo, hi] = fit.rangeHz;
   const inRange = f >= lo * 0.98 && f <= hi * 1.02;
 
@@ -224,5 +252,30 @@ export function estimateLitresFromTaps(
   confidence *= inRange ? 1 : 0.6;
   confidence *= clamp((summary.snrDb - 10) / 20, 0.3, 1);
   confidence *= summary.rejected > summary.used ? 0.6 : 1;
-  return { litres, uncertaintyLitres, confidence: clamp(confidence, 0, 1), inRange };
+  // An assumed curve shape is only right near the one calibrated fill.
+  if (fit.model.kind === 'power' && fit.model.kRange) {
+    confidence *= clamp(1 - shapeUncertaintyLitres / Math.max(litres, 0.1 * cap), 0.3, 1);
+  }
+  return {
+    litres,
+    uncertaintyLitres,
+    shapeUncertaintyLitres,
+    confidence: clamp(confidence, 0, 1),
+    inRange,
+  };
+}
+
+/** Largest change in the estimate when k moves across its assumed range (0 if k was fitted). */
+function shapeSpread(fit: TapFit, f: number, cap: number): number {
+  const m = fit.model;
+  if (m.kind !== 'power' || !m.kRange) return 0;
+  // The single filled point (V₁, y₁) stays on every candidate curve: α = y₁ / V₁ᵏ, so
+  // α_k = α · V₁^(k_assumed − k). V₁ is the only filled point, i.e. maxLitres.
+  const centre = clamp(fit.predict(f), 0, cap);
+  let spread = 0;
+  for (const k of m.kRange) {
+    const alpha = m.alpha * fit.maxLitres ** (m.k - k);
+    spread = Math.max(spread, Math.abs(clamp(powerPredictor(m.f0, alpha, k)(f), 0, cap) - centre));
+  }
+  return spread;
 }
