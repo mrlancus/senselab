@@ -1,0 +1,38 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "senselab",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  // One Worker serves the PWA (static assets) and the API. Only /api/* runs the Worker;
+  // everything else is served straight from the asset store with SPA fallback.
+  "assets": {
+    "directory": "../web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"],
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "senselab",
+      "database_id": "ea3ff26b-35f3-42cf-9305-dffa1e6a48ee",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "r2_buckets": [
+    {
+      "binding": "RECORDINGS",
+      "bucket_name": "senselab-recordings",
+    },
+  ],
+  "vars": {
+    "APP_VERSION": "dev",
+  },
+  "observability": {
+    "enabled": true,
+  },
+  // Lets `wrangler versions upload --preview-alias pr-N` give each PR its own URL.
+  // Previews share production D1/R2 bindings — see README.
+  "preview_urls": true,
+  "workers_dev": true,
+}
