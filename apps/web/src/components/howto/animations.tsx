@@ -250,3 +250,37 @@ export function ClapAnim() {
     </svg>
   );
 }
+
+/** Camera, top view: a bank card lying on the rim, the phone straight above, a flash. */
+export function CardOnRimAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <ellipse cx="62" cy="64" rx="46" ry="20" className="a-bucket" />
+      <ellipse cx="62" cy="64" rx="40" ry="16" className="a-handle" />
+      <rect x="86" y="54" width="26" height="16" rx="2" className="a-card" />
+      <g transform="translate(122 6) rotate(20)">
+        <Phone x={0} y={0} w={20} h={36} />
+      </g>
+      <circle cx="132" cy="44" r="6" className="a-flash" />
+      <text x="62" y="96" className="a-label" textAnchor="middle">
+        card flat on the rim
+      </text>
+    </svg>
+  );
+}
+
+/** Camera, side view: the card taped upright on the wall, the phone level, 1–2 m away. */
+export function CardOnSideAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <Bucket level={0.45} />
+      <rect x="76" y="44" width="10" height="17" rx="1.5" className="a-card" />
+      <Phone x={136} y={44} w={14} h={24} />
+      <circle cx="136" cy="56" r="5" className="a-flash" />
+      <path d="M128 56 H112" className="a-arc" />
+      <text x="80" y="98" className="a-label" textAnchor="middle">
+        level, 1–2 m back, zoom in
+      </text>
+    </svg>
+  );
+}

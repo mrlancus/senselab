@@ -452,3 +452,24 @@
     opacity: 0;
   }
 }
+
+.a-card {
+  fill: var(--warn);
+  stroke: var(--text);
+  stroke-width: 1;
+}
+.a-flash {
+  fill: var(--surface);
+  opacity: 0;
+  animation: a-flash 2.4s ease-out infinite;
+}
+@keyframes a-flash {
+  0%,
+  60%,
+  100% {
+    opacity: 0;
+  }
+  65% {
+    opacity: 1;
+  }
+}
