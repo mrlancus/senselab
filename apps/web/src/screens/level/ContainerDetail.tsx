@@ -131,7 +131,7 @@ function DetailView({ c, reload }: { c: Detail; reload: () => void }) {
           {fit && (
             <p className="muted small mono">
               {fit.model.kind === 'power'
-                ? `(f₀/f)² − 1 = ${fit.model.alpha.toExponential(3)}·V^${fit.model.k.toFixed(2)}, f₀ = ${fit.model.f0.toFixed(1)} Hz`
+                ? `(f₀/f)² − 1 = ${fit.model.alpha.toExponential(3)}·V^${fit.model.k.toFixed(2)}${fit.model.kRange ? ` (k assumed, ${fit.model.kRange[0]}–${fit.model.kRange[1]})` : ''}, f₀ = ${fit.model.f0.toFixed(1)} Hz`
                 : 'monotone interpolation (no empty point, or pitch did not follow the mass-loading law)'}
               {fit.residualRmsLitres > 0.001
                 ? ` · residual ${fit.residualRmsLitres.toFixed(2)} L`
@@ -246,7 +246,7 @@ function Measure({
     <div className="stack">
       {last && (
         <div className="card result">
-          <LitresGauge litres={last.est.litres} capacity={gaugeCap} />
+          <LitresGauge litres={last.est.litres} capacity={gaugeCap} shape={c.shape} />
           <div className="stack" style={{ gap: 4 }}>
             <span className="big-number">≈ {last.est.litres.toFixed(1)} L</span>
             <span className="muted mono">± {last.est.uncertaintyLitres.toFixed(1)} L</span>
@@ -256,6 +256,12 @@ function Measure({
               </span>
             )}
             <ConfidencePill value={last.est.confidence} />
+            {last.est.shapeUncertaintyLitres > 0.05 && (
+              <span className="small warn-text">
+                Calibrated with one fill only, so the curve shape between fills is assumed. Add
+                another known fill to tighten this.
+              </span>
+            )}
             {!last.est.inRange && (
               <span className="small warn-text">
                 Outside the calibrated range. Add a calibration point near this fill.
@@ -329,7 +335,9 @@ function Calibrate({
     ? 'Start with the container empty and dry (0 L).'
     : points.length === 1
       ? 'Now pour in a measured amount (a jug with markings), e.g. half full.'
-      : 'Add another known fill (e.g. nearly full) to improve the curve.';
+      : points.length === 2
+        ? 'Add a second known fill (e.g. nearly full). With only one fill the curve shape is guessed.'
+        : 'Add another known fill to improve the curve.';
 
   return (
     <div className="stack">
