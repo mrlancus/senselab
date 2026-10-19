@@ -1,0 +1,165 @@
+/**
+ * Tiny looping SVG animations for the how-to steps. All motion is CSS (howto.css) and is
+ * switched off under prefers-reduced-motion, leaving a still that still reads correctly.
+ * viewBox is 160×100 for every animation so they line up in the step list.
+ */
+
+function Phone({ x, y, w = 34, h = 62 }: { x: number; y: number; w?: number; h?: number }) {
+  return (
+    <g>
+      <rect x={x} y={y} width={w} height={h} rx={6} className="a-phone" />
+      <rect x={x + 3} y={y + 6} width={w - 6} height={h - 14} rx={2} className="a-screen" />
+      <rect x={x + w / 2 - 5} y={y + h - 5} width={10} height={2} rx={1} className="a-slot" />
+    </g>
+  );
+}
+
+function Ripples({
+  cx,
+  cy,
+  className = '',
+  half = false,
+}: {
+  cx: number;
+  cy: number;
+  className?: string;
+  /** Upper half only, for sound leaving something that sits on a surface. */
+  half?: boolean;
+}) {
+  return (
+    <g className={`a-ripples ${className}`}>
+      {[0, 1, 2].map((i) =>
+        half ? (
+          <path
+            key={i}
+            d={`M${cx - 10} ${cy} a10 10 0 0 1 20 0`}
+            className={`a-ripple half d${i}`}
+          />
+        ) : (
+          <circle key={i} cx={cx} cy={cy} r={10} className={`a-ripple d${i}`} />
+        ),
+      )}
+    </g>
+  );
+}
+
+/** Sensor check: phone face-up on a table, sweep going out and coming back in. */
+export function PhoneOnTableAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <rect x="10" y="80" width="140" height="6" rx="2" className="a-table" />
+      {/* Side view of a phone lying face-up: a thin slab with the speaker at its right end. */}
+      <rect x="44" y="71" width="72" height="9" rx="3" className="a-phone" />
+      <rect x="50" y="71.5" width="56" height="2.5" rx="1" className="a-screen" />
+      <Ripples cx={112} cy={71} half />
+      <Ripples cx={48} cy={71} half className="echo" />
+      <text x="14" y="20" className="a-label">
+        quiet room · phone flat
+      </text>
+    </svg>
+  );
+}
+
+/** Mic check: a voice wave flowing into the phone, level bars bouncing. */
+export function MicListenAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <Phone x={96} y={18} />
+      <path d="M8 50 q8 -14 16 0 t16 0 t16 0 t16 0 t16 0" className="a-wave" />
+      {[0, 1, 2, 3, 4].map((i) => (
+        <rect
+          key={i}
+          x={102 + i * 5}
+          y={40}
+          width={3}
+          height={24}
+          rx={1}
+          className={`a-level d${i}`}
+        />
+      ))}
+    </svg>
+  );
+}
+
+/** Motion check: phone tilting back and forth with axis arrows. */
+export function PhoneTiltAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <g className="a-tilt">
+        <Phone x={63} y={10} />
+      </g>
+      <path d="M40 78 a44 44 0 0 1 80 0" className="a-arc" />
+      <path d="M116 72 l5 7 l-8 1" className="a-arc" />
+      <path d="M44 72 l-5 7 l8 1" className="a-arc" />
+    </svg>
+  );
+}
+
+function Bucket({ level = 0, className = '' }: { level?: number; className?: string }) {
+  // Frustum side view: top 44–116, bottom 54–106, rim y=30, base y=88.
+  const yTop = 30;
+  const yBot = 88;
+  const wy = yBot - level * (yBot - yTop);
+  const xl = (y: number) => 54 - ((yBot - y) / (yBot - yTop)) * 10;
+  const xr = (y: number) => 106 + ((yBot - y) / (yBot - yTop)) * 10;
+  return (
+    <g className={className}>
+      {level > 0 && (
+        <path
+          d={`M${xl(wy)} ${wy} L${xr(wy)} ${wy} L106 ${yBot} L54 ${yBot} Z`}
+          className="a-water"
+        />
+      )}
+      <path d="M44 30 L116 30 L106 88 L54 88 Z" className="a-bucket" />
+      <path d="M44 30 q36 -26 72 0" className="a-handle" />
+    </g>
+  );
+}
+
+/** Tap: a pen swings and taps the bucket's side; ripples go out to the phone. */
+export function TapBucketAnim({ level = 0.4 }: { level?: number }) {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <Bucket level={level} />
+      <g className="a-pen">
+        <rect x="118" y="2" width="5" height="40" rx="2" className="a-pen-body" />
+        <path d="M118 42 l2.5 6 l2.5 -6 z" className="a-pen-tip" />
+      </g>
+      <Ripples cx={114} cy={46} className="on-hit" />
+      <g transform="translate(132 72) scale(0.5)">
+        <Phone x={0} y={0} />
+      </g>
+    </svg>
+  );
+}
+
+/** Calibration: water poured from a jug, the level rising to a known amount. */
+export function FillBucketAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <g className="a-fill">
+        <Bucket level={0.55} />
+      </g>
+      <g className="a-jug">
+        <path d="M120 6 h22 v26 a6 6 0 0 1 -6 6 h-10 a6 6 0 0 1 -6 -6 z" className="a-jug-body" />
+        <path d="M120 10 l-8 4 l8 2" className="a-jug-body" />
+      </g>
+      <path d="M112 16 q-4 20 -18 30" className="a-pour" />
+      <text x="128" y="52" className="a-label" textAnchor="middle">
+        2.0 L
+      </text>
+    </svg>
+  );
+}
+
+/** Calibration: the empty bucket. */
+export function EmptyBucketAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <Bucket level={0} />
+      <text x="80" y="66" className="a-label a-blink" textAnchor="middle">
+        0 L
+      </text>
+    </svg>
+  );
+}
