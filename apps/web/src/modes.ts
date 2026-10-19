@@ -12,7 +12,7 @@ export const modes: ModeInfo[] = [
     title: 'Sensor check',
     blurb: 'See what your phone’s speaker, mic and sensors can do. Run this first.',
     icon: '🎚️',
-    status: 'soon',
+    status: 'ready',
   },
   {
     path: '/level',
