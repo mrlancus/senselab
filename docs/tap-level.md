@@ -17,7 +17,13 @@ supported by the floor. So we don't predict pitch from geometry. Each container 
 
 - **Empty + two or more fills:** least squares on `log((f₀/f)² − 1) = log α + k·log V`.
   Three points (empty, half, full) determine it exactly. We require k ∈ (0.3, 8).
-- **Empty + one fill:** we assume k = 1 (added mass proportional to volume).
+- **Empty + one fill:** k can't be measured, so we assume **k = 2** and report the
+  spread over **k ∈ [1, 4]** as part of the ± (see Uncertainty). k = 1 is added mass
+  proportional to volume. French's (h/H)⁴ is k ≈ 4 for a near-cylindrical vessel, because
+  the wall moves most near the rim and liquid low down barely loads the mode. k = 2 is
+  the geometric middle. The reading is exact at the calibrated fill and rough away from
+  it, and the UI says so. (Before the numbers audit this was k = 1 with no extra
+  uncertainty, which could be off by several litres at a half fill.)
 - **No empty point, or the pitch rose with fill:** monotone cubic (PCHIP) interpolation
   through the points, so there's no overshoot.
 
@@ -43,13 +49,18 @@ supported by the floor. So we don't predict pitch from geometry. Each container 
    mode or a mis-hit), and report the robust spread.
 5. **Litres:** apply the fitted curve, clamped to [0, capacity]. Capacity comes from the
    frustum dimensions if known, otherwise 1.25× the largest calibrated fill.
-6. **Uncertainty:** `±L = |dV/df| · spread + calibration residual`.
+6. **Uncertainty:** `±L = |dV/df| · max(spread, 0.2%·f) + calibration residual + shape`.
+   - `spread` is the per-tap σ (robust), not the standard error of the median, so this is
+     deliberately conservative. The 0.2% floor is about the pitch resolution of one tap.
+   - `shape` is non-zero only for one-fill calibrations: the largest change in the reading
+     as k moves across [1, 4] with the calibrated point held fixed.
 7. **Confidence** (0–1, heuristic):
    - `exp(−spread/f / 1%)`
    - × 0.8 for two taps, or 0.55 for one
    - × 0.6 outside the calibrated pitch range
    - × an SNR factor (10 → 30 dB maps to 0.3 → 1)
    - × 0.6 if most taps were rejected
+   - one-fill calibrations: × (1 − shape/litres), floored at 0.3
 
 ## How to tap (shown in the app as an animation)
 
@@ -78,8 +89,9 @@ supported by the floor. So we don't predict pitch from geometry. Each container 
 - **Mode hopping:** a different tap spot excites a different mode. The narrowed search band
   and the median/outlier rejection help. The debug view lists every peak per tap so we can
   see it happen.
-- **Small pitch change:** if a container's pitch changes less than ~2% from empty to full,
-  calibration is refused ("same pitch").
+- **Small pitch change:** if the calibration pitches span less than **1%**
+  (`MIN_PITCH_CHANGE`), calibration is refused ("same pitch"). Taps on one spot scatter by
+  about 0.2–0.5%, so a smaller change leaves only a couple of distinguishable levels.
 - If tap proves unreliable for a container, **echo ranging** (Step 4) is the next-best
   method for open buckets.
 
