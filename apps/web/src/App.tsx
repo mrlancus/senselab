@@ -8,6 +8,7 @@ import { Home } from './screens/Home';
 import { ContainerDetail } from './screens/level/ContainerDetail';
 import { ContainerForm } from './screens/level/ContainerForm';
 import { LevelHome } from './screens/level/LevelHome';
+import { Ruler } from './screens/Ruler';
 import { SensorCheck } from './screens/SensorCheck';
 
 // First match wins, so literal paths go before parameterised ones.
@@ -17,6 +18,7 @@ const screens: [string, (p: Record<string, string>) => ReactNode][] = [
   ['/level/new', () => <ContainerForm />],
   ['/level/:id/edit', (p) => <ContainerForm id={p.id} />],
   ['/level/:id', (p) => <ContainerDetail key={p.id} id={p.id!} />],
+  ['/ruler', () => <Ruler />],
 ];
 
 export function App() {

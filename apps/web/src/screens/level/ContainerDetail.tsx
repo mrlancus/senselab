@@ -17,6 +17,11 @@ import { api, type ContainerDetail as Detail } from '../../lib/api';
 import { useDebug } from '../../lib/debug';
 import { Link, navigate } from '../../lib/router';
 import { useAsync } from '../../lib/useAsync';
+import { ConfidencePill } from './ConfidencePill';
+import { EchoCalibrate, EchoMeasure } from './EchoLevel';
+
+type Method = 'tap' | 'echo';
+const UNIT: Record<string, string> = { tap: 'Hz', echo: 'cm', camera: 'cm' };
 
 export function ContainerDetail({ id }: { id: string }) {
   const { data, error, loading, reload } = useAsync(() => api.getContainer(id), id);
@@ -50,6 +55,10 @@ function tryFit(points: CalibrationPoint[]): { fit: TapFit | null; why: string |
 function DetailView({ c, reload }: { c: Detail; reload: () => void }) {
   const debug = useDebug();
   const tapPoints = c.calibration.filter((p) => p.method === 'tap');
+  const echoPoints = c.calibration.filter((p) => p.method === 'echo');
+  const [method, setMethod] = useState<Method>(
+    !tapPoints.length && echoPoints.length ? 'echo' : 'tap',
+  );
   const { fit, why } = useMemo(() => tryFit(c.calibration), [c.calibration]);
   const capacity = c.shape ? frustumCapacityLitres(c.shape) : undefined;
   const [mode, setMode] = useState<'measure' | 'calibrate'>(fit ? 'measure' : 'calibrate');
@@ -70,9 +79,24 @@ function DetailView({ c, reload }: { c: Detail; reload: () => void }) {
         <h1>{c.name}</h1>
         <p className="muted small">
           {capacity ? `${capacity.toFixed(1)} L capacity` : 'No dimensions'}
-          {c.material ? ` · ${c.material}` : ''} · {tapPoints.length} tap calibration point
-          {tapPoints.length === 1 ? '' : 's'}
+          {c.material ? ` · ${c.material}` : ''} · {tapPoints.length} tap / {echoPoints.length} echo
+          calibration point
+          {tapPoints.length + echoPoints.length === 1 ? '' : 's'}
         </p>
+      </div>
+
+      <div className="segmented" role="tablist" aria-label="Method">
+        {(['tap', 'echo'] as const).map((m) => (
+          <button
+            key={m}
+            role="tab"
+            aria-selected={method === m}
+            className={method === m ? 'on' : ''}
+            onClick={() => setMethod(m)}
+          >
+            {m === 'tap' ? '🥄 Tap pitch' : '📡 Echo'}
+          </button>
+        ))}
       </div>
 
       <div className="segmented" role="tablist">
@@ -94,7 +118,11 @@ function DetailView({ c, reload }: { c: Detail; reload: () => void }) {
         </button>
       </div>
 
-      {mode === 'measure' && (
+      {method === 'echo' && mode === 'measure' && (
+        <EchoMeasure c={c} reload={reload} goCalibrate={() => setMode('calibrate')} />
+      )}
+      {method === 'echo' && mode === 'calibrate' && <EchoCalibrate c={c} reload={reload} />}
+      {method === 'tap' && mode === 'measure' && (
         <Measure
           c={c}
           fit={fit}
@@ -106,7 +134,7 @@ function DetailView({ c, reload }: { c: Detail; reload: () => void }) {
           goCalibrate={() => setMode('calibrate')}
         />
       )}
-      {mode === 'calibrate' && (
+      {method === 'tap' && mode === 'calibrate' && (
         <Calibrate
           c={c}
           points={tapPoints}
@@ -116,7 +144,32 @@ function DetailView({ c, reload }: { c: Detail; reload: () => void }) {
         />
       )}
 
-      {(tapPoints.length > 0 || debug) && (
+      {method === 'echo' && echoPoints.length > 0 && (
+        <div className="card stack">
+          <h2>Echo calibration</h2>
+          <ul className="list compact">
+            {echoPoints.map((p) => (
+              <li key={p.id} className="list-item row" style={{ justifyContent: 'space-between' }}>
+                <span className="mono">
+                  {p.knownLitres} L → {p.measuredValue.toFixed(1)} cm
+                </span>
+                <button
+                  className="small danger"
+                  onClick={async () => {
+                    await api.deleteCalibration(c.id, p.id);
+                    reload();
+                  }}
+                  aria-label={`Delete ${p.knownLitres} L echo point`}
+                >
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {method === 'tap' && (tapPoints.length > 0 || debug) && (
         <div className="card stack">
           <h2>Calibration curve</h2>
           {tapPoints.length ? (
@@ -169,7 +222,8 @@ function DetailView({ c, reload }: { c: Detail; reload: () => void }) {
                 <span>
                   <strong>{m.estimatedLitres.toFixed(1)} L</strong>{' '}
                   <span className="muted small">
-                    {m.method} · {m.rawValue.toFixed(1)} Hz · {(m.confidence * 100).toFixed(0)}%
+                    {m.method} · {m.rawValue.toFixed(1)} {UNIT[m.method] ?? ''} ·{' '}
+                    {(m.confidence * 100).toFixed(0)}%
                   </span>
                 </span>
                 <span className="muted small">{new Date(m.createdAt).toLocaleString()}</span>
@@ -279,15 +333,6 @@ function Measure({
         onResult={onResult}
       />
     </div>
-  );
-}
-
-function ConfidencePill({ value }: { value: number }) {
-  const label = value >= 0.7 ? 'high' : value >= 0.4 ? 'medium' : 'low';
-  return (
-    <span className={`pill ${label}`}>
-      {label} confidence ({(value * 100).toFixed(0)}%)
-    </span>
   );
 }
 

@@ -17,7 +17,7 @@ export const modes: ModeInfo[] = [
   {
     path: '/level',
     title: 'Liquid level',
-    blurb: 'How many litres are in that bucket? Tap it, ping it, or film it.',
+    blurb: 'How many litres are in that bucket? Tap it or ping it (camera coming).',
     icon: '🪣',
     status: 'ready',
   },
@@ -40,7 +40,7 @@ export const modes: ModeInfo[] = [
     title: 'Sonar ruler',
     blurb: 'Distance to a wall using sound.',
     icon: '📏',
-    status: 'soon',
+    status: 'ready',
   },
   {
     path: '/metal',
