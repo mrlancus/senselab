@@ -24,7 +24,8 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
 
 ## Conventions
 
-- TypeScript strict with `noUncheckedIndexedAccess`. Packages are consumed as source
+- TypeScript strict (`noUncheckedIndexedAccess` is off: DSP is index-heavy and every consumer
+  compiles the DSP sources, so the setting must match repo-wide). Packages are consumed as source
   (`exports` → `src/index.ts`), so there's no build step for packages.
 - Use TS ~6.0 (typescript-eslint doesn't support TS 7 yet), Vitest 5 and Vite 8.
 - DSP tests use synthetic signals with known answers (chirps at known delays, decaying
@@ -61,10 +62,22 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
   - R2 `senselab-recordings`
     The account has other unrelated D1 databases and R2 buckets. Never touch them.
 
+## Browser audio plumbing
+
+- `apps/web/src/audio/engine.ts`: a singleton `audio` that owns the AudioContext, the raw
+  mic stream and an AudioWorklet recorder. Use `audio.start()` (from a tap),
+  `audio.record(s)`, `audio.playAndRecord(samples)` and `audio.onChunk(cb)`.
+- `apps/web/src/workers/`: the DSP Web Worker. Add a function to `dsp-handlers.ts`, then
+  call it with `await runDsp('name', ...args)`.
+- Debug views: wrap them in `useDebug()` (`lib/debug.ts`), and offer `<SaveRecording>`
+  for fixtures.
+- Headless check: `wrangler dev` in apps/api serves the built web app. Playwright with
+  `--use-fake-device-for-media-stream` exercises the flows (the fake mic only beeps).
+
 ## Status
 
 - [x] Step 1: scaffold, CI, Worker + D1 + R2, hello deploy
-- [ ] Step 2: sensor check screen + `packages/dsp` core
+- [x] Step 2: sensor check screen + `packages/dsp` core
 - [ ] Step 3: calibrated tap liquid level
 - [ ] Step 4: echo ranging
 - [ ] Step 5: camera dimension estimate
