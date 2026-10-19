@@ -15,3 +15,4 @@ export * from './wav';
 export * from './window';
 export * from './echo';
 export * from './echo-level';
+export * from './rt60';
