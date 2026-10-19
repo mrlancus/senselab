@@ -1,8 +1,12 @@
 import {
+  ampToDb,
   analyzeSweep,
+  analyzeTaps,
   crossCorrelate,
   envelope,
+  magnitudeSpectrum,
   spectrogram,
+  summarizeTaps,
   type SweepAnalysisInput,
 } from '@senselab/dsp';
 
@@ -17,6 +21,25 @@ export const handlers = {
   },
   spectrogram: (x: Float32Array, sampleRate: number, frameSize = 1024, hop = 512) =>
     spectrogram(x, sampleRate, { frameSize, hop }),
+  analyzeTaps: (x: Float32Array, sampleRate: number, band: [number, number] = [80, 6000]) => {
+    const { taps, onsetsS } = analyzeTaps(x, sampleRate, { fMin: band[0], fMax: band[1] });
+    const summary = summarizeTaps(taps);
+    // Debug: the in-band spectrum of the first few taps.
+    const spectra = taps.slice(0, 4).map((t) => {
+      const start = Math.round(t.onsetS * sampleRate) + Math.round(0.003 * sampleRate);
+      const seg = x.slice(start, start + Math.round(0.12 * sampleRate));
+      const s = magnitudeSpectrum(seg, sampleRate, { zeroPad: 4 });
+      const k0 = Math.floor(band[0] / s.binHz);
+      const k1 = Math.ceil(band[1] / s.binHz);
+      return {
+        f0: k0 * s.binHz,
+        dHz: s.binHz,
+        db: Float32Array.from(s.mags.subarray(k0, k1), (m) => ampToDb(m)),
+        peakHz: t.frequency,
+      };
+    });
+    return { taps, onsetsS, summary, spectra };
+  },
 };
 
 export type Handlers = typeof handlers;
