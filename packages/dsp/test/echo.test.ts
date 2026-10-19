@@ -44,11 +44,18 @@ function simulate(
     ...(opts.nearField ?? []).map((e) => ({ delay: toDelay(e.cm), gain: e.gain })),
     ...(opts.echoes ?? []).map((e) => ({ delay: toDelay(e.cm), gain: e.gain })),
   ];
+  // Place each chirp of each path separately: a short exact fractional delay (FFT of ~1k
+  // points) added at its integer offset. Far cheaper than delaying the whole train.
   const out = new Float64Array(len);
+  const n = train.chirp.length + 64;
   for (const p of paths) {
     for (const s of speaker) {
-      const d = fractionalDelay(train.train, t0 + p.delay + s.delay, len);
-      for (let i = 0; i < len; i++) out[i] += p.gain * s.gain * d[i];
+      for (let k = 0; k < train.repeats; k++) {
+        const d = t0 + p.delay + s.delay + k * train.period;
+        const i0 = Math.floor(d);
+        const piece = fractionalDelay(train.chirp, d - i0, n);
+        for (let i = 0; i < n && i0 + i < len; i++) out[i0 + i] += p.gain * s.gain * piece[i];
+      }
     }
   }
   return { recorded: addNoise(out, opts.noise ?? 0.01, opts.seed ?? 3), emitIndex: pad };
