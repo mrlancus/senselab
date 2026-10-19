@@ -33,7 +33,7 @@ export const modes: ModeInfo[] = [
     title: 'Room acoustics',
     blurb: 'Reverb time (RT60) from a clap.',
     icon: '🏛️',
-    status: 'soon',
+    status: 'ready',
   },
   {
     path: '/ruler',

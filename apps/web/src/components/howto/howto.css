@@ -396,3 +396,59 @@
     transform: none;
   }
 }
+
+/* Clap: hands meet at 50 % of the cycle, in step with the on-hit ripples. */
+.a-hand {
+  fill: var(--warn);
+  opacity: 0.85;
+}
+.a-clap-l,
+.a-clap-r {
+  animation: a-clap-l 1.6s ease-in infinite;
+}
+.a-clap-r {
+  animation-name: a-clap-r;
+}
+@keyframes a-clap-l {
+  0%,
+  30%,
+  62%,
+  100% {
+    transform: translateX(-14px);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+@keyframes a-clap-r {
+  0%,
+  30%,
+  62%,
+  100% {
+    transform: translateX(14px);
+  }
+  50% {
+    transform: translateX(-3px);
+  }
+}
+.wide .a-ripple {
+  stroke-width: 1.5;
+}
+.on-hit.wide .a-ripple {
+  animation-name: a-hit-wide;
+}
+@keyframes a-hit-wide {
+  0%,
+  49% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(5);
+    opacity: 0;
+  }
+}

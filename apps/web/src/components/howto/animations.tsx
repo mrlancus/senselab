@@ -233,3 +233,20 @@ export function PhoneAtWallAnim() {
     </svg>
   );
 }
+
+/** Room acoustics: two hands clap once; sound spreads out and bounces off the walls. */
+export function ClapAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <rect x="6" y="10" width="4" height="80" className="a-table" />
+      <rect x="150" y="10" width="4" height="80" className="a-table" />
+      <g className="a-clap-l">
+        <rect x="58" y="34" width="18" height="30" rx="8" className="a-hand" />
+      </g>
+      <g className="a-clap-r">
+        <rect x="84" y="34" width="18" height="30" rx="8" className="a-hand" />
+      </g>
+      <Ripples cx={80} cy={49} className="on-hit wide" />
+    </svg>
+  );
+}

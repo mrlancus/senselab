@@ -1,6 +1,7 @@
 import {
   ampToDb,
   analyzeEcho,
+  analyzeRoom,
   analyzeSweep,
   analyzeTaps,
   crossCorrelate,
@@ -67,6 +68,7 @@ export const handlers = {
       samplesPerCm: (2 * cfg.sampleRate) / (100 * speed),
     };
   },
+  analyzeRoom: (x: Float32Array, sampleRate: number) => analyzeRoom(x, sampleRate),
 };
 
 export type Handlers = typeof handlers;
