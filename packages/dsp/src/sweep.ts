@@ -146,10 +146,16 @@ export function pickChirpBand(bands: BandResult[], minSnrDb = 15): ChirpBand | n
   };
   const ultra = runs(16000, 24000)[0];
   if (ultra && ultra.f1 - ultra.f0 >= 2000) return { ...ultra, kind: 'ultrasonic' };
-  const audible = runs(1000, 12000)[0];
-  if (audible && audible.f1 - audible.f0 >= 2000) {
-    // An audible chirp is clearly heard; keep it in the 2–8 kHz region where phones are best.
-    return { f0: Math.max(audible.f0, 2000), f1: Math.min(audible.f1, 8000), kind: 'audible' };
-  }
+  // An audible chirp is clearly heard, so prefer the 2–8 kHz region where phone speakers
+  // and mics are flattest. Clip each run to it, and only fall back to the unclipped run
+  // when no clipped run is still ≥ 2 kHz wide (a 8–12 kHz run would clip to nothing).
+  const audibleRuns = runs(1000, 12000);
+  const clipped = audibleRuns
+    .map((r) => ({ f0: Math.max(r.f0, 2000), f1: Math.min(r.f1, 8000) }))
+    .filter((r) => r.f1 - r.f0 >= 2000)
+    .sort((a, b) => b.f1 - b.f0 - (a.f1 - a.f0))[0];
+  if (clipped) return { ...clipped, kind: 'audible' };
+  const audible = audibleRuns[0];
+  if (audible && audible.f1 - audible.f0 >= 2000) return { ...audible, kind: 'audible' };
   return null;
 }

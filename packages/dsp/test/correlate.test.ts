@@ -31,6 +31,13 @@ describe('cross-correlation', () => {
     expect(Math.abs(findDelay(sig, ping).lag - delay)).toBeLessThan(3);
   });
 
+  it('scores a clean match near 1 at any carrier phase when using the envelope', () => {
+    for (const delay of [600, 600.25, 600.5, 600.75]) {
+      const sig = fractionalDelay(ping, delay, 4096);
+      expect(findDelay(sig, ping, { useEnvelope: true }).score).toBeGreaterThan(0.9);
+    }
+  });
+
   it('separates a direct path from a weaker echo (sonar geometry)', () => {
     // Direct speaker→mic at 50 samples, echo off a water surface 30 cm away (≈ 84 samples later).
     const echoDelay = 50 + (2 * 0.3 * SR) / 343;

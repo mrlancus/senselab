@@ -58,14 +58,14 @@ export function TapCapture({
     setError(null);
     setAnalysis(null);
     setRecordingKey(null);
-    let info;
+    let lease;
     try {
-      info = await audio.start();
+      lease = await audio.acquire();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       return;
     }
-    const sr = info.sampleRate;
+    const sr = lease.info.sampleRate;
     const chunks: Float32Array[] = [];
     setPhase('listening');
     setLiveTaps(0);
@@ -96,6 +96,8 @@ export function TapCapture({
       const off = audio.onChunk((c) => tail.push(c));
       setTimeout(() => (off(), r()), 250);
     });
+    // Done with the mic: close it before the (slower) analysis.
+    lease.release();
     const samples = concat([...chunks, ...tail]);
     setRec({ samples, sampleRate: sr });
     setPhase('analysing');

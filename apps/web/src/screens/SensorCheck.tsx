@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { makeSweep, sweepOptions, type Spectrogram, type SweepAnalysis } from '@senselab/dsp';
-import { audio, type MicInfo } from '../audio/engine';
+import { audio, type MicInfo, type MicLease } from '../audio/engine';
 import { CapabilityList } from '../components/CapabilityList';
 import { HowTo } from '../components/howto/HowTo';
 import { MicListenAnim, PhoneOnTableAnim, PhoneTiltAnim } from '../components/howto/animations';
@@ -28,6 +28,8 @@ interface SweepRun {
   correlation: Float32Array;
   sampleRate: number;
   sg: Spectrogram | null;
+  /** Recording index where playback was scheduled to start. */
+  emitIndex: number;
 }
 
 export function SensorCheck() {
@@ -41,32 +43,45 @@ export function SensorCheck() {
   const [sweepError, setSweepError] = useState<string | null>(null);
   const [run, setRun] = useState<SweepRun | null>(null);
   const [profile, setProfile] = useState<AudioProfile | null>(loadAudioProfile);
+  // The live meter holds the mic open; it's released by "Stop" or on leaving the screen.
+  const meter = useRef<MicLease | null>(null);
+  const [metering, setMetering] = useState(false);
 
   useEffect(() => {
     detectCapabilities().then(setCaps);
+    return () => meter.current?.release();
   }, []);
 
   const startMic = async () => {
     setMicError(null);
     try {
-      setMic(await audio.start());
+      meter.current?.release();
+      meter.current = await audio.acquire();
+      setMic(meter.current.info);
+      setMetering(true);
     } catch (e) {
       setMicError(micErrorMessage(e));
     }
+  };
+  const stopMic = () => {
+    meter.current?.release();
+    meter.current = null;
+    setMetering(false);
   };
 
   const runSweep = async () => {
     setSweepError(null);
     setRun(null);
     try {
-      const info = mic ?? (await audio.start());
-      setMic(info);
-      const sr = info.sampleRate;
-      setSweepState('noise');
-      const noise = await audio.record(0.6);
-      setSweepState('sweep');
-      const emitted = makeSweep(sr, SWEEP_S);
-      const recorded = await audio.playAndRecord(emitted, PAD_S);
+      const { sr, noise, emitted, recorded, emitIndex } = await audio.withMic(async (info) => {
+        setMic(info);
+        const sr = info.sampleRate;
+        setSweepState('noise');
+        const noise = await audio.record(0.6);
+        setSweepState('sweep');
+        const emitted = makeSweep(sr, SWEEP_S);
+        return { sr, noise, emitted, ...(await audio.playAndRecord(emitted, PAD_S)) };
+      });
       setSweepState('analyse');
       const { analysis, correlation } = await runDsp('analyzeSweep', {
         sweep: sweepOptions(sr, SWEEP_S),
@@ -75,13 +90,13 @@ export function SensorCheck() {
         noise,
       });
       const sg = debug ? await runDsp('spectrogram', recorded, sr, 1024, 512) : null;
-      setRun({ analysis, recorded, noise, correlation, sampleRate: sr, sg });
+      setRun({ analysis, recorded, noise, correlation, sampleRate: sr, sg, emitIndex });
       setSweepState('done');
       if (analysis.heard) {
         const p: AudioProfile = {
           measuredAt: new Date().toISOString(),
           sampleRate: sr,
-          latencyS: analysis.latencyS - PAD_S,
+          latencyS: analysis.latencyS - emitIndex / sr,
           usableMaxHz: analysis.usableMaxHz,
           chirp: analysis.recommended,
           bands: analysis.bands,
@@ -124,13 +139,18 @@ export function SensorCheck() {
             },
           ]}
         />
-        {!mic ? (
+        {!mic || !metering ? (
           <button className="primary block" onClick={startMic}>
-            Start microphone
+            {mic ? 'Start the level meter again' : 'Start microphone'}
           </button>
         ) : (
+          <button className="block" onClick={stopMic}>
+            Stop microphone
+          </button>
+        )}
+        {mic && (
           <>
-            <LiveMic />
+            {metering && <LiveMic />}
             <dl className="kv">
               <dt>Sample rate</dt>
               <dd className="mono">{mic.sampleRate} Hz</dd>
@@ -255,7 +275,10 @@ function SweepDebug({ run }: { run: SweepRun }) {
       <Waveform
         data={run.recorded}
         sampleRate={run.sampleRate}
-        markers={[{ x: a.latencyS, label: 'sweep start' }]}
+        markers={[
+          { x: run.emitIndex / run.sampleRate, label: 'play' },
+          { x: a.latencyS, label: 'heard' },
+        ]}
       />
       {run.sg && (
         <>
@@ -291,8 +314,10 @@ function SweepDebug({ run }: { run: SweepRun }) {
         </tbody>
       </table>
       <p className="mono small">
-        latency (incl. {PAD_S * 1000} ms pad) {(a.latencyS * 1000).toFixed(1)} ms · score{' '}
-        {a.matchScore.toFixed(3)} · sr {run.sampleRate}
+        round-trip latency {((a.latencyS - run.emitIndex / run.sampleRate) * 1000).toFixed(1)} ms
+        (sweep at {(a.latencyS * 1000).toFixed(1)} ms, scheduled at{' '}
+        {((run.emitIndex / run.sampleRate) * 1000).toFixed(1)} ms) · score {a.matchScore.toFixed(3)}{' '}
+        · sr {run.sampleRate}
       </p>
       <SaveRecording
         samples={run.recorded}
@@ -327,10 +352,11 @@ function MotionCard() {
     let last = 0;
     const onMotion = (e: DeviceMotionEvent) => {
       const c = count.current;
-      if (!c.t0) c.t0 = performance.now();
-      c.n++;
       const now = performance.now();
-      if (now - last < 100) return;
+      if (!c.t0) c.t0 = now;
+      c.n++;
+      // n events span n − 1 intervals.
+      if (now - last < 100 || c.n < 2) return;
       last = now;
       const g = e.accelerationIncludingGravity;
       const r = e.rotationRate;
@@ -339,7 +365,7 @@ function MotionCard() {
         y: g?.y ?? 0,
         z: g?.z ?? 0,
         rot: Math.hypot(r?.alpha ?? 0, r?.beta ?? 0, r?.gamma ?? 0),
-        hz: (c.n / (now - c.t0)) * 1000,
+        hz: ((c.n - 1) / (now - c.t0)) * 1000,
       });
     };
     window.addEventListener('devicemotion', onMotion);

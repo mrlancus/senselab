@@ -28,7 +28,9 @@ Before using them we measure what this device can actually emit and hear.
      other frequencies.
 4. **Chirp band choice:** the widest contiguous run of bands with SNR ≥ 15 dB.
    - Prefer runs at or above 16 kHz that are at least 2 kHz wide (**ultrasonic**).
-   - Otherwise use an audible 2–8 kHz chirp (**audible**: you'll hear clicks).
+   - Otherwise use an audible chirp (**audible**: you'll hear clicks): the best run
+     clipped to 2–8 kHz, where phone speakers and mics are flattest, if that still leaves
+     ≥ 2 kHz; otherwise the unclipped run (e.g. 8–12 kHz).
    - The result is saved in localStorage as the device's audio profile.
 5. **Motion sensors** (event rate, accel incl. gravity, rotation rate) and the
    **magnetometer** (Android Chrome only).
@@ -39,9 +41,15 @@ Before using them we measure what this device can actually emit and hear.
   `navigator.audioSession.type = 'play-and-record'` where supported (Safari 17+). If
   playback is very quiet, iOS may be using the earpiece, and the sweep will report low
   SNR. The ring/silent switch can mute web audio.
-- The latency number includes JS timer jitter (`setTimeout` schedules the pad), so treat
-  it as approximate. Echo ranging doesn't depend on it: it uses the direct
-  speaker→mic path in each recording as its time zero.
+- **Latency** is measured on the AudioContext clock: playback is scheduled with
+  `start(when)` and the recorder worklet stamps every batch with `currentFrame`, so the
+  recording index where playback was scheduled (`emitIndex`) is exact. Round-trip latency
+  is `(lag − emitIndex) / fs`: output plus input latency, no timer jitter. (Before the
+  numbers audit it was `lag − pad`, which was off by the 50 ms scheduling delay plus up to
+  ~50 ms of timer and batch jitter.) Echo ranging still doesn't depend on it: it uses the
+  direct speaker→mic path in each recording as its time zero.
+- The **match score** is the envelope peak over √(template energy × signal energy), in
+  [0, 1]. Below 0.05 we say the sweep wasn't heard.
 - Headless Chromium's fake microphone plays a beep, so the sweep correctly reports "not
   heard". Real verification needs a real phone.
 
