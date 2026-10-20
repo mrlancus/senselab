@@ -65,6 +65,9 @@ await withMic(`${S}/tap-7.5.wav`, async (page) => {
   await page.locator('.big-number').waitFor();
   await page.waitForTimeout(1500);
   console.log('RESULT', (await page.locator('.result').innerText()).replace(/\n/g, ' | '));
+  // The mic must be closed again once the measurement is done (no "in use" indicator).
+  await page.waitForTimeout(1200);
+  console.log('MIC OPEN AFTER', await page.evaluate(() => globalThis.__senselabAudio?.running));
   await page.screenshot({ path: `${S}/measure.png`, fullPage: true });
 });
 console.log('ERRORS', JSON.stringify(errors));

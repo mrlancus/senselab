@@ -32,11 +32,8 @@ export function crossCorrelate(
   return sr.slice(0, lags);
 }
 
-/**
- * Magnitude of the analytic signal (Hilbert envelope). Turns an oscillating correlation
- * into a smooth bump whose peak is robust to the carrier phase.
- */
-export function envelope(x: ArrayLike<number>): Float64Array {
+/** Analytic signal x + i·H{x} (H = Hilbert transform), via FFT. */
+export function analytic(x: ArrayLike<number>): { re: Float64Array; im: Float64Array } {
   const n = nextPow2(x.length);
   const re = new Float64Array(n);
   const im = new Float64Array(n);
@@ -52,9 +49,16 @@ export function envelope(x: ArrayLike<number>): Float64Array {
     im[k] = 0;
   }
   ifft(re, im);
-  const out = new Float64Array(x.length);
-  for (let i = 0; i < x.length; i++) out[i] = Math.hypot(re[i], im[i]);
-  return out;
+  return { re: re.slice(0, x.length), im: im.slice(0, x.length) };
+}
+
+/**
+ * Magnitude of the analytic signal (Hilbert envelope). Turns an oscillating correlation
+ * into a smooth bump whose peak is robust to the carrier phase.
+ */
+export function envelope(x: ArrayLike<number>): Float64Array {
+  const { re, im } = analytic(x);
+  return re.map((v, i) => Math.hypot(v, im[i]));
 }
 
 export interface DelayEstimate {

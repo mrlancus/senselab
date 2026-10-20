@@ -85,3 +85,30 @@ export const recordingSchema = z.object({
   createdAt: z.string(),
 });
 export type Recording = z.infer<typeof recordingSchema>;
+
+/** Modes that learn from labelled examples the user records. */
+export const exampleModes = ['knock', 'alert', 'fruit'] as const;
+export type ExampleMode = (typeof exampleModes)[number];
+
+/** JSON payloads stay small: feature vectors and fingerprints, not audio. */
+export const MAX_EXAMPLE_DATA_CHARS = 64 * 1024;
+
+export const exampleInputSchema = z.object({
+  mode: z.enum(exampleModes),
+  label: z.string().trim().min(1).max(60),
+  data: z
+    .record(z.string(), z.unknown())
+    .refine((d) => JSON.stringify(d).length <= MAX_EXAMPLE_DATA_CHARS, 'data too large'),
+  recordingKey: z.string().max(200).nullable().default(null),
+});
+export type ExampleInput = z.input<typeof exampleInputSchema>;
+
+export const exampleSchema = z.object({
+  id: z.string(),
+  mode: z.enum(exampleModes),
+  label: z.string(),
+  data: z.record(z.string(), z.unknown()),
+  recordingKey: z.string().nullable(),
+  createdAt: z.string(),
+});
+export type Example = z.infer<typeof exampleSchema>;
