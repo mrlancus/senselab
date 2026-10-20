@@ -490,3 +490,34 @@ export function analyzeEcho(
     usedReference: useRef,
   };
 }
+
+export interface BaselineTemperature {
+  /** Measured speed of sound, m/s. */
+  speed: number;
+  tempC: number;
+  /** 1σ, °C. */
+  sigmaC: number;
+}
+
+/**
+ * Air temperature from two echo distances to the same wall, measured `baselineCm` apart.
+ * The raw distances were computed with an assumed speed `assumedSpeed`; the true speed is
+ * assumedSpeed · L / (r_B − r_A). Using the difference cancels the phone's own offsets
+ * (speaker/mic geometry, latency). c ∝ √T_K, so dT ≈ 2·T_K·dc/c.
+ */
+export function temperatureFromBaseline(
+  rawA: number,
+  rawB: number,
+  baselineCm: number,
+  opts: { assumedSpeed?: number; sigmaRawCm?: number; sigmaBaselineCm?: number } = {},
+): BaselineTemperature | null {
+  const d = Math.abs(rawB - rawA);
+  if (!(baselineCm > 0) || d < 1) return null;
+  const speed = ((opts.assumedSpeed ?? speedOfSound(20)) * baselineCm) / d;
+  const tempC = temperatureForSpeed(speed);
+  const rel = Math.hypot(
+    (opts.sigmaBaselineCm ?? 0.3) / baselineCm,
+    (Math.SQRT2 * (opts.sigmaRawCm ?? 0.15)) / d,
+  );
+  return { speed, tempC, sigmaC: 2 * (tempC + 273.15) * rel };
+}

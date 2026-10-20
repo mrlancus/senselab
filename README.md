@@ -72,12 +72,16 @@ pnpm build
 
 ## Modes
 
-| Mode                                 | Status                                           | Notes                                        |
-| ------------------------------------ | ------------------------------------------------ | -------------------------------------------- |
-| Sensor check                         | ready                                            | [docs/sensor-check.md](docs/sensor-check.md) |
-| Liquid level: calibrated tap         | ready (synthetic-verified; awaits a real bucket) | [docs/tap-level.md](docs/tap-level.md)       |
-| Liquid level: echo ranging           | ready (synthetic-verified; awaits a real bucket) | [docs/echo-level.md](docs/echo-level.md)     |
-| Sonar ruler                          | ready (synthetic-verified)                       | [docs/ruler.md](docs/ruler.md)               |
-| Liquid level: camera                 | planned                                          |                                              |
-| Knock ID, room acoustics             | later                                            |                                              |
-| Metal finder, sound alerts, presence | later                                            |                                              |
+| Mode                         | Status                                           | Notes                                              |
+| ---------------------------- | ------------------------------------------------ | -------------------------------------------------- |
+| Sensor check                 | ready                                            | [docs/sensor-check.md](docs/sensor-check.md)       |
+| Liquid level: calibrated tap | ready (synthetic-verified; awaits a real bucket) | [docs/tap-level.md](docs/tap-level.md)             |
+| Liquid level: echo ranging   | ready (synthetic-verified; awaits a real bucket) | [docs/echo-level.md](docs/echo-level.md)           |
+| Sonar ruler                  | ready (synthetic-verified)                       | [docs/ruler.md](docs/ruler.md)                     |
+| Liquid level: camera         | ready (synthetic-verified; AR experimental)      | [docs/camera-level.md](docs/camera-level.md)       |
+| Room acoustics (RT60)        | ready (synthetic-verified)                       | [docs/room-acoustics.md](docs/room-acoustics.md)   |
+| Knock ID + fruit firmness    | ready (synthetic-verified)                       | [docs/knock-id.md](docs/knock-id.md)               |
+| Metal finder                 | ready (synthetic-verified)                       | [docs/metal-finder.md](docs/metal-finder.md)       |
+| Sound alerts                 | ready (synthetic-verified)                       | [docs/sound-alerts.md](docs/sound-alerts.md)       |
+| Presence (motion, breathing) | ready (synthetic-verified)                       | [docs/presence.md](docs/presence.md)               |
+| Air temperature              | experimental (synthetic-verified)                | [docs/air-temperature.md](docs/air-temperature.md) |

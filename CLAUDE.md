@@ -44,7 +44,8 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
      `prefers-reduced-motion`.
 - Feature-detect every sensor and show a clear "not supported on this device" state.
   iOS Safari has no WebXR and no magnetometer, and needs `DeviceMotionEvent.requestPermission()`
-  from a tap.
+  (and `DeviceOrientationEvent.requestPermission()`) from a tap. Android Chrome only exposes
+  `Magnetometer` behind a flag, so the metal finder falls back to compass − gyro.
 - Request the mic with echoCancellation, noiseSuppression and autoGainControl all set to
   false, and always read back the real `AudioContext.sampleRate`.
 - When a method proves unreliable on real devices, say so in its doc and in the UI.
@@ -65,8 +66,13 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
 ## Browser audio plumbing
 
 - `apps/web/src/audio/engine.ts`: a singleton `audio` that owns the AudioContext, the raw
-  mic stream and an AudioWorklet recorder. Use `audio.start()` (from a tap),
-  `audio.record(s)`, `audio.playAndRecord(samples)` and `audio.onChunk(cb)`.
+  mic stream and an AudioWorklet recorder. **The mic is only open while leased:** wrap a
+  measurement in `await audio.withMic(async (info) => …)` (from a tap), or hold
+  `audio.acquire()` for open-ended use (a live meter, an armed alert) and `release()` it on
+  stop and on unmount. When the last lease goes, the tracks stop (no "mic in use"
+  indicator) and the context suspends. Inside a lease use `audio.record(s)`,
+  `audio.playAndRecord(samples)` and `audio.onChunk(cb)`. E2E scripts check
+  `__senselabAudio.running === false` after each flow.
 - `apps/web/src/workers/`: the DSP Web Worker. Add a function to `dsp-handlers.ts`, then
   call it with `await runDsp('name', ...args)`.
 - Debug views: wrap them in `useDebug()` (`lib/debug.ts`), and offer `<SaveRecording>`
@@ -78,8 +84,14 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
 - Echo: `components/EchoCapture.tsx` owns the free-air reference flow, the ping and the
   debug view; `lib/echo.ts` keeps the per-device band, reference and air temperature.
   Keep `ECHO_WINDOW_CM` fixed, because stored references must match the window length.
+- Camera: `components/PhotoTapper.tsx` collects taps in photo pixels (fine-adjust drag plus
+  magnifier); the geometry is in `packages/dsp/src/camera.ts`.
+- Learned modes store labelled examples via `/api/examples?mode=…` (`knock`, `alert`,
+  `fruit`; JSON payload ≤ 64 KB). `components/ImpactRecorder.tsx` records a few knocks/taps
+  with a live counter (and optional motion).
 - Data loading: `useAsync(fn, key)` (`lib/useAsync.ts`). Routes go in the `screens` list in
-  `App.tsx`; the first match wins.
+  `App.tsx`; the first match wins. Screens are lazy-loaded (`named(() => import(...), 'Name')`)
+  so each mode is its own chunk; add new screens the same way.
 
 ## Status
 
@@ -87,4 +99,10 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
 - [x] Step 2: sensor check screen + `packages/dsp` core
 - [x] Step 3: calibrated tap liquid level (synthetic-verified; awaiting a real-bucket test)
 - [x] Step 4: echo ranging + sonar ruler (synthetic-verified; awaiting a real-bucket test)
-- [ ] Step 5: camera dimension estimate
+- [x] Step 5: camera dimensions + waterline (synthetic-verified; WebXR AR untested on devices)
+- [x] Room acoustics RT60 (synthetic-verified)
+- [x] Knock ID + fruit firmness (synthetic-verified); examples in D1 `examples` (0002)
+- [x] Metal finder: Magnetometer |B| or compass − gyro (synthetic-verified)
+- [x] Sound alerts: smoke T3 / CO T4 + taught fingerprints (synthetic-verified)
+- [x] Presence: sonar motion + breathing rate (synthetic-verified)
+- [x] Air temperature (experimental): echo baseline → speed of sound → °C
