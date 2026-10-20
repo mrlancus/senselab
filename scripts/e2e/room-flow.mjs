@@ -23,6 +23,8 @@ for (let i = 0; i < 3; i++) {
   await page.getByRole('button', { name: /Clap again/ }).waitFor({ timeout: 20000 });
 }
 console.log('RESULT', await page.locator('.big-number').innerText());
+await page.waitForTimeout(1200);
+console.log('MIC OPEN AFTER', await page.evaluate(() => globalThis.__senselabAudio?.running));
 console.log((await page.locator('table.numbers').first().innerText()).replace(/\t/g, ' '));
 await page.screenshot({ path: `${S}/room.png`, fullPage: true });
 await ctx.close();

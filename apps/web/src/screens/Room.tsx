@@ -39,9 +39,10 @@ export function Room() {
   const listen = async () => {
     setError(null);
     try {
-      const info = await audio.start();
-      setPhase('listening');
-      const samples = await audio.record(RECORD_S);
+      const { info, samples } = await audio.withMic(async (info) => {
+        setPhase('listening');
+        return { info, samples: await audio.record(RECORD_S) };
+      });
       setPhase('analysing');
       const analysis = await runDsp('analyzeRoom', samples, info.sampleRate);
       setPhase('idle');

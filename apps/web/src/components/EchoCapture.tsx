@@ -85,12 +85,14 @@ export function EchoCapture({
     setError(null);
     setRecordingKey(null);
     try {
-      const info = await audio.start();
-      setSr(info.sampleRate);
-      const c = echoConfig(info.sampleRate);
-      const train = makeEchoTrain(c);
-      setPhase('pinging');
-      const { recorded, emitIndex } = await audio.playAndRecord(train.train, PAD_S);
+      // The mic (and speaker) are only held for the ~1.5 s of the ping itself.
+      const { recorded, emitIndex, c } = await audio.withMic(async (info) => {
+        setSr(info.sampleRate);
+        const c = echoConfig(info.sampleRate);
+        const train = makeEchoTrain(c);
+        setPhase('pinging');
+        return { c, ...(await audio.playAndRecord(train.train, PAD_S)) };
+      });
       setPhase('analysing');
       const ref = asReference ? null : loadReference(c);
       const r = await runDsp('echo', recorded, emitIndex, c, ECHO_WINDOW_CM, {

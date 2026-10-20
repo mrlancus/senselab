@@ -65,8 +65,13 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
 ## Browser audio plumbing
 
 - `apps/web/src/audio/engine.ts`: a singleton `audio` that owns the AudioContext, the raw
-  mic stream and an AudioWorklet recorder. Use `audio.start()` (from a tap),
-  `audio.record(s)`, `audio.playAndRecord(samples)` and `audio.onChunk(cb)`.
+  mic stream and an AudioWorklet recorder. **The mic is only open while leased:** wrap a
+  measurement in `await audio.withMic(async (info) => …)` (from a tap), or hold
+  `audio.acquire()` for open-ended use (a live meter, an armed alert) and `release()` it on
+  stop and on unmount. When the last lease goes, the tracks stop (no "mic in use"
+  indicator) and the context suspends. Inside a lease use `audio.record(s)`,
+  `audio.playAndRecord(samples)` and `audio.onChunk(cb)`. E2E scripts check
+  `__senselabAudio.running === false` after each flow.
 - `apps/web/src/workers/`: the DSP Web Worker. Add a function to `dsp-handlers.ts`, then
   call it with `await runDsp('name', ...args)`.
 - Debug views: wrap them in `useDebug()` (`lib/debug.ts`), and offer `<SaveRecording>`
