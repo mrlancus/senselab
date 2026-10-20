@@ -7,6 +7,7 @@ import {
   noReferenceMinCm,
   speedOfSound,
   temperatureForSpeed,
+  temperatureFromBaseline,
   type EchoTrain,
 } from '../src';
 import { addNoise, fractionalDelay, SR } from './synth';
@@ -201,5 +202,45 @@ describe('echo ranging', () => {
 
   it('throws when the recording is too short', () => {
     expect(() => echoResponse(new Float64Array(1000), ultra)).toThrow(/too short/);
+  });
+});
+
+describe('air temperature from a baseline', () => {
+  it('recovers the temperature from two simulated readings 1 m apart', () => {
+    // At 30 °C the true speed is higher, so distances computed at 20 °C read short.
+    const c20 = speedOfSound(20);
+    const c30 = speedOfSound(30);
+    const read = (trueCm: number) => (trueCm * c20) / c30 - 0.8; // −0.8 cm phone offset
+    const t = temperatureFromBaseline(read(40), read(140), 100)!;
+    expect(t.speed).toBeCloseTo(c30, 6);
+    expect(t.tempC).toBeCloseTo(30, 6);
+    // ±0.3 cm baseline, ±0.15 cm per reading, over 1 m: about ±2 °C.
+    expect(t.sigmaC).toBeGreaterThan(1.5);
+    expect(t.sigmaC).toBeLessThan(2.5);
+  });
+
+  it('end to end with the echo engine (wall moved 60 cm, at 5 °C)', () => {
+    const c5 = speedOfSound(5);
+    const ref = simulate(ultra, { seed: 31 });
+    const reference = echoResponse(ref.recorded, ultra, { emitIndex: ref.emitIndex }).corr;
+    // simulate() places echoes using C (20 °C); scale distances so they're right at 5 °C.
+    const at = (trueCm: number, seed: number) => {
+      const { recorded, emitIndex } = simulate(ultra, {
+        echoes: [{ cm: (trueCm * C) / c5, gain: 0.1 }],
+        seed,
+      });
+      const a = analyzeEcho(echoResponse(recorded, ultra, { emitIndex }), ultra, {
+        reference,
+        maxCm: 140,
+      });
+      return a.best!.rawCm;
+    };
+    const t = temperatureFromBaseline(at(30, 1), at(90, 2), 60)!;
+    expect(Math.abs(t.tempC - 5)).toBeLessThan(2);
+  });
+
+  it('refuses a zero baseline or no movement', () => {
+    expect(temperatureFromBaseline(50, 50.5, 100)).toBeNull();
+    expect(temperatureFromBaseline(50, 150, 0)).toBeNull();
   });
 });

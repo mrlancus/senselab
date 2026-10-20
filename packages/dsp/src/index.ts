@@ -20,3 +20,4 @@ export * from './camera';
 export * from './knock';
 export * from './metal';
 export * from './alerts';
+export * from './presence';

@@ -1,6 +1,8 @@
 import {
   ampToDb,
   analyzeEcho,
+  breathingRate,
+  pingFrames,
   bandSpectrogram,
   detectAlarm,
   makeFingerprint,
@@ -105,6 +107,43 @@ export const handlers = {
     };
   },
   makeFingerprint: (x: Float32Array, sampleRate: number) => makeFingerprint(x, sampleRate),
+  /**
+   * Presence: index in `x` of a ping's direct path. Every whole ping's direct path is equally
+   * strong, and a chirp cut off at the window edge is weaker, so the global maximum is safe.
+   */
+  presenceAlign: (x: Float32Array, template: Float32Array) => {
+    const env = envelope(crossCorrelate(x, template, x.length - template.length));
+    let best = -1;
+    let max = 0;
+    for (let i = 0; i < env.length; i++) if (env[i] > max) [max, best] = [env[i], i];
+    return best;
+  },
+  /**
+   * Range profiles for every whole ping in `x`, and where each one's direct path peaks (bin);
+   * a jump away from `pre` means the audio stream glitched and the caller must re-align.
+   */
+  presenceFrames: (
+    x: Float32Array,
+    template: Float32Array,
+    first: number,
+    period: number,
+    bins: number,
+    pre: number,
+  ) => {
+    const frames = pingFrames(x, template, first, period, bins, pre).frames;
+    const directBins = frames.map((f) => {
+      let best = 0;
+      let bi = 0;
+      for (let i = 0; i < Math.min(bins, 2 * pre); i++) {
+        const m = f[2 * i] ** 2 + f[2 * i + 1] ** 2;
+        if (m > best) [best, bi] = [m, i];
+      }
+      return bi;
+    });
+    return { frames, directBins };
+  },
+  breathing: (frames: Float32Array[], frameHz: number, binFrom: number, binTo: number) =>
+    breathingRate(frames, frameHz, binFrom, binTo),
   /** Fruit: the first strong resonance of each tap, 60–1500 Hz. */
   fruitTaps: (x: Float32Array, sampleRate: number) => {
     const onsets = detectOnsets(x, sampleRate, { minGapS: 0.25 });
