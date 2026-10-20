@@ -57,6 +57,7 @@ d.polygon([P(v) for v in card], fill=(230, 180, 40), outline=(0, 0, 0))
 img.save(f'{out}/side.png')
 taps['side'] = {'size': [W, H], 'card': [P(v) for v in card],
                 'rimFront': [P((0, -R, HOUT))], 'baseFront': [P((0, -r, 0))],
-                'waterFront': [P((0, -rw, WATER))], 'top': [tl, tr], 'bottom': [bl, br]}
+                'waterFront': [P((0, -rw, WATER))], 'top': [tl, tr], 'bottom': [bl, br],
+                'water': [wl, wr]}
 json.dump(taps, open(f'{out}/photos.json', 'w'), indent=1)
-print('wrote top.png, side.png, photos.json: expect 28.0 / ~22 / 24.0 cm, water 14.0 cm')
+print('wrote top.png, side.png, photos.json: expect 28.0 / ~22 / 24.0 cm, water 14.0 cm (11.8 L capacity)')

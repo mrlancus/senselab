@@ -4,7 +4,27 @@ The camera measures the bucket's **inside dimensions**, which tap and echo then 
 translucent buckets the **water level through the wall**. It works on every phone: a
 photo plus taps. Android phones with ARCore also get an experimental AR tape measure.
 
-## Geometry (`packages/dsp/src/camera.ts`)
+## No reference object (the default)
+
+A level side photo from 1.5–2 m shows the plane through the bucket's axis almost as a true
+similarity. The silhouette ends of the rim and base sit r²/D in front of the axis, about
+1.3 cm at 1.5 m, so the **proportions** are right to ~1% without any ruler: top width,
+bottom width, and height along the axis (`proportionsFromSilhouette`). Height measured
+along the axis also makes a small roll harmless; a 5° pitch costs under 3% (tested).
+
+The **size** then comes from one number the user already has (`scaleProportions`):
+
+| Source                                                      | How                                                                                           | Scale error (1σ)                                        |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Printed capacity ("10 L" moulded on the bucket)             | solve for the scale at which the inside frustum (outside − 2·wall, − base) holds exactly that | ±2.3% in length (±7% in volume: brim-full vs fill line) |
+| One length (outside height or top width, any tape or ruler) | direct                                                                                        | ±0.3 cm                                                 |
+| Depth by sound (echo of the empty bucket, phone at the rim) | inside height = raw + 1 cm                                                                    | ±1.5 cm (hand height)                                   |
+
+**Waterline** (translucent) needs no scale at all once the shape is known: depth =
+(waterline height / outside height) · (H + base) − base (`waterDepthFromProportions`), ±0.4 cm
+in the E2E.
+
+## With a card or sheet (most accurate)
 
 A flat reference of known size fixes a **homography** from the photo to its own plane, in
 millimetres (4-point DLT, normalised). Points in that plane are then measured exactly from
@@ -22,8 +42,8 @@ any camera angle. Points out of it are not, so we only rely on in-plane points:
   (≈ r/D) cancels to first order: within 2% at 1.5 m.
 - **Combining:** bottom ⌀ = top ⌀ × taper; vertical height = √(s² − ((D_top − D_bot)/2)²);
   inside height = outside height − base thickness (default 1 cm, editable).
-- **Waterline** (translucent): with the shape known, water depth = slant_w · H_out /
-  slant_total − base. Litres follow from the frustum.
+- (With a card in the side photo, `waterDepthWithShape` also converts a wall slant to a
+  depth; the app now uses the reference-free waterline above.)
 
 ## Precision, honestly
 
@@ -58,7 +78,9 @@ a tape measure before trusting it.
 - **Browser E2E** (`scripts/e2e/camera-flow.mjs` + `gen-photos.py`): rendered photos of a
   28/22/24 cm bucket, tapped through the real UI (touch-down plus fine drag):
   - **28.0 / 22.0 / 24.0 cm**, capacity 11.8 L, saved to the container
-  - waterline **14.0 cm ≈ 6.2 L**
+  - waterline **14.0 cm ≈ 6.2 L**, from one photo with no card
+  - no reference, one side photo + the printed 11.8 L: **27.8 / 21.7 / 24.4 cm** (truth
+    28 / 22 / 24, stated ±0.7 cm)
 
 ## Not yet verified, and the risks
 

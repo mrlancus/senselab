@@ -41,5 +41,5 @@ Camera (dimensions and waterline):
 python3 scripts/e2e/gen-photos.py /tmp/cam && node scripts/e2e/camera-flow.mjs /tmp/cam
 ```
 
-Expected: `28.0 / 22.0 / 24.0 cm`, capacity `11.8 L`, waterline `14.0 cm ≈ 6.2 L`. Needs
-Pillow and numpy.
+Expected: no-reference `≈ 27.8 / 21.7 / 24.4 cm` (from the printed 11.8 L), card
+`28.0 / 22.0 / 24.0 cm`, waterline `14.0 cm ≈ 6.2 L`. Needs Pillow and numpy.

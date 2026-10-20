@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import {
   bucketFromViews,
   cardHomography,
@@ -6,15 +6,17 @@ import {
   frustumLitresAtLevel,
   measureSideView,
   measureTopView,
+  proportionsFromSilhouette,
+  waterDepthFromProportions,
   REFERENCES,
-  waterDepthWithShape,
   type Point,
   type SideViewResult,
   type TopViewResult,
 } from '@senselab/dsp';
-import { HowTo } from '../../components/howto/HowTo';
 import { CardOnRimAnim, CardOnSideAnim } from '../../components/howto/animations';
-import { PhotoTapper, type TapResult, type TapStep } from '../../components/PhotoTapper';
+import { type TapResult, type TapStep } from '../../components/PhotoTapper';
+import { CardTooSmall, Photo } from './CameraPhoto';
+import { NoReference } from './CameraNoReference';
 import { api, type ContainerDetail } from '../../lib/api';
 import { useDebug } from '../../lib/debug';
 import { Link, navigate } from '../../lib/router';
@@ -52,14 +54,9 @@ const SIDE_STEPS: TapStep[] = [
 ];
 
 const WATER_STEPS: TapStep[] = [
-  { key: 'card', prompt: 'Tap the 4 corners of the card', min: 4, max: 4 },
-  {
-    key: 'baseFront',
-    prompt: 'Tap the bottom of the base straight below the card',
-    min: 1,
-    max: 1,
-  },
-  { key: 'waterFront', prompt: 'Tap the waterline straight above the card', min: 1, max: 1 },
+  { key: 'top', prompt: 'Tap the left and right ends of the rim', min: 2, max: 2 },
+  { key: 'bottom', prompt: 'Tap the left and right ends of the base', min: 2, max: 2 },
+  { key: 'water', prompt: 'Tap both ends of the waterline', min: 2, max: 2 },
 ];
 
 /** Length of the reference's longest side in the photo, px (debug view). */
@@ -75,67 +72,50 @@ export function CameraMeasure({ id, view }: { id: string; view: 'dimensions' | '
   return view === 'waterline' ? <Waterline c={data} /> : <Dimensions c={data} />;
 }
 
-function Photo({
-  title,
-  howTitle,
-  art,
-  text,
-  steps,
-  onTaps,
-  children,
-}: {
-  title: string;
-  howTitle: string;
-  art: ReactNode;
-  text: string;
-  steps: TapStep[];
-  onTaps: (t: TapResult | null, tapPx: number) => void;
-  children?: ReactNode;
-}) {
-  const [file, setFile] = useState<File | null>(null);
-  const [done, setDone] = useState(false);
-  const [taps, setTaps] = useState<TapResult | null>(null);
+function Dimensions({ c }: { c: ContainerDetail }) {
+  const [method, setMethod] = useState<'none' | 'card'>('none');
   return (
-    <div className="card stack">
-      <h2>{title}</h2>
-      <HowTo compact steps={[{ art, title: howTitle, text }]} />
-      <label className="button block file-button">
-        {file ? 'Retake photo' : 'Take photo'}
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={(e) => {
-            setFile(e.target.files?.[0] ?? null);
-            setDone(false);
-            onTaps(null, 1);
-          }}
-        />
-      </label>
-      {file && !done && (
-        <PhotoTapper
-          key={file.name + file.size + file.lastModified}
-          file={file}
-          steps={steps}
-          onDone={(t, info) => {
-            setDone(true);
-            setTaps(t);
-            onTaps(t, info.tapPx);
-          }}
-        />
-      )}
-      {done && (
-        <button className="small" onClick={() => (setDone(false), onTaps(null, 1))}>
-          Re-tap points
+    <section className="stack">
+      <div>
+        <Link href={`/level/${c.id}`} className="small">
+          ← {c.name}
+        </Link>
+        <h1>📷 Measure with the camera</h1>
+        <p className="muted small">
+          Finds the bucket's inside top diameter, bottom diameter and height, so tap and echo can
+          turn readings into litres.
+        </p>
+      </div>
+      <XrMeasure />
+      <div className="segmented" role="tablist" aria-label="Method">
+        <button
+          role="tab"
+          aria-selected={method === 'none'}
+          className={method === 'none' ? 'on' : ''}
+          onClick={() => setMethod('none')}
+        >
+          No reference
         </button>
-      )}
-      {children}
-      {file && <PhotoDebug file={file} taps={done ? taps : null} />}
-    </div>
+        <button
+          role="tab"
+          aria-selected={method === 'card'}
+          className={method === 'card' ? 'on' : ''}
+          onClick={() => setMethod('card')}
+        >
+          Card or A4 sheet
+        </button>
+      </div>
+      <p className="muted small">
+        {method === 'none'
+          ? 'One side photo for the shape, plus one number you already have for the size: the capacity printed on the bucket, any one length, or its depth measured by sound.'
+          : 'Most accurate: a bank card or sheet of paper in the photo is the ruler. Two photos.'}
+      </p>
+      {method === 'none' ? <NoReference c={c} /> : <CardDimensions c={c} />}
+    </section>
   );
 }
 
-function Dimensions({ c }: { c: ContainerDetail }) {
+function CardDimensions({ c }: { c: ContainerDetail }) {
   const debug = useDebug();
   const [top, setTop] = useState<{ r: TopViewResult; px: number; taps: TapResult } | null>(null);
   const [side, setSide] = useState<{ r: SideViewResult; px: number; taps: TapResult } | null>(null);
@@ -158,17 +138,6 @@ function Dimensions({ c }: { c: ContainerDetail }) {
 
   return (
     <section className="stack">
-      <div>
-        <Link href={`/level/${c.id}`} className="small">
-          ← {c.name}
-        </Link>
-        <h1>📷 Measure with the camera</h1>
-        <p className="muted small">
-          A bank card (85.6 × 54 mm) is the ruler. Two photos give the inside top diameter, the
-          bottom diameter and the height.
-        </p>
-      </div>
-      <XrMeasure />
       <label>
         Top-view reference
         <select value={ref} onChange={(e) => setRef(e.target.value as keyof typeof REFERENCES)}>
@@ -333,7 +302,6 @@ function Waterline({ c }: { c: ContainerDetail }) {
   );
   const [base, setBase] = useState('1');
   const [saved, setSaved] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
   const shape = c.shape;
   if (!shape) {
     return (
@@ -355,8 +323,9 @@ function Waterline({ c }: { c: ContainerDetail }) {
         </Link>
         <h1>📷 Waterline</h1>
         <p className="muted small">
-          For translucent buckets: the water shows through the wall. One side photo with the card
-          taped on gives the water depth, and the bucket's shape gives litres.
+          For translucent buckets: the water shows through the wall. One level side photo gives the
+          waterline's share of the height, and the bucket's dimensions turn that into litres. No
+          card needed.
         </p>
       </div>
       <label>
@@ -365,37 +334,26 @@ function Waterline({ c }: { c: ContainerDetail }) {
       </label>
       <Photo
         title="Side view"
-        howTitle="Card on the wall, below the waterline"
+        howTitle="Phone level with the water, 1.5–2 m back"
         art={<CardOnSideAnim />}
-        text="Card upright on the outside wall, below the waterline if you can. Step back 1–2 m, phone level with the water, zoom in."
+        text="Zoom in so the bucket fills most of the frame. Hold the phone level, not tilted up or down."
         steps={WATER_STEPS}
         onTaps={(t, tapPx) => {
           setSaved(false);
-          setErr(null);
           if (!t) return setResult(null);
-          try {
-            const side = measureSideView(
-              {
-                card: t.card,
-                rimFront: t.waterFront[0],
-                baseFront: t.baseFront[0],
-                waterFront: t.waterFront[0],
-                topLeft: t.card[0],
-                topRight: t.card[1],
-                bottomLeft: t.card[0],
-                bottomRight: t.card[1],
-              },
-              tapPx,
-            );
-            const depthCm = waterDepthWithShape(side.waterSlantCm!, shape, baseCm);
-            setResult({
-              depthCm,
-              litres: frustumLitresAtLevel(shape, depthCm),
-              sigmaCm: Math.hypot(side.uncertaintyCm, 0.3),
-            });
-          } catch (e) {
-            setErr(e instanceof Error ? e.message : String(e));
-          }
+          const p = proportionsFromSilhouette(
+            {
+              topLeft: t.top[0],
+              topRight: t.top[1],
+              bottomLeft: t.bottom[0],
+              bottomRight: t.bottom[1],
+              waterLeft: t.water[0],
+              waterRight: t.water[1],
+            },
+            tapPx,
+          );
+          const w = waterDepthFromProportions(p, shape, baseCm)!;
+          setResult({ ...w, litres: frustumLitresAtLevel(shape, w.depthCm) });
         }}
       >
         {result && (
@@ -404,7 +362,6 @@ function Waterline({ c }: { c: ContainerDetail }) {
             <span className="mono muted">
               water {result.depthCm.toFixed(1)} ± {result.sigmaCm.toFixed(1)} cm deep
             </span>
-            {result.sigmaCm > 1 && <CardTooSmall />}
             <button
               className="primary block"
               disabled={saved}
@@ -424,56 +381,6 @@ function Waterline({ c }: { c: ContainerDetail }) {
           </div>
         )}
       </Photo>
-      {err && <p className="error">{err}</p>}
     </section>
-  );
-}
-
-function CardTooSmall() {
-  return (
-    <p className="notice small">
-      The reference looks small in this photo, so tap precision limits accuracy (over 3%). Get
-      closer or zoom in so it's bigger (keeping the whole bucket in view), or for the top view, use
-      an A4 sheet instead of the card.
-    </p>
-  );
-}
-
-/** Taps as "key:x,y;x,y|key:…" in whole pixels, to fit a 200-character label. */
-const compactTaps = (t: TapResult) =>
-  Object.entries(t)
-    .map(([k, pts]) => `${k}:${pts.map((p) => `${Math.round(p.x)},${Math.round(p.y)}`).join(';')}`)
-    .join('|')
-    .slice(0, 200);
-
-function PhotoDebug({ file, taps }: { file: File; taps: TapResult | null }) {
-  const debug = useDebug();
-  const [state, setState] = useState<string | null>(null);
-  if (!debug) return null;
-  return (
-    <div className="row small">
-      <button
-        className="small"
-        onClick={async () => {
-          setState('Uploading…');
-          try {
-            const r = await api.uploadRecording(file, {
-              mode: 'camera',
-              labels: {
-                name: file.name.slice(0, 100),
-                bytes: file.size,
-                ...(taps ? { taps: compactTaps(taps) } : {}),
-              },
-            });
-            setState(`Saved ${r.key}`);
-          } catch (e) {
-            setState(e instanceof Error ? e.message : String(e));
-          }
-        }}
-      >
-        Save photo to cloud
-      </button>
-      {state && <span className="muted mono">{state}</span>}
-    </div>
   );
 }
