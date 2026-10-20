@@ -9,6 +9,10 @@ import {
   homography,
   measureSideView,
   measureTopView,
+  proportionsFromSilhouette,
+  scaleProportions,
+  waterDepthFromProportions,
+  frustumCapacityLitres,
   REFERENCES,
   waterDepthWithShape,
   type Point,
@@ -223,5 +227,83 @@ describe('side view: card taped to the wall', () => {
   it('waterline with a known shape gives the same depth', () => {
     const shape = { topDiameterCm: 28, bottomDiameterCm: 22, heightCm: 24 };
     expect(waterDepthWithShape(side.waterSlantCm!, shape, 1)).toBeCloseTo(14, 6);
+  });
+});
+
+describe('no reference object: one side photo + one number', () => {
+  const silhouetteOf = (project: (p: V3) => Point) => {
+    const ends = (radius: number, z: number) => {
+      let lo: Point = { x: Infinity, y: 0 };
+      let hi: Point = { x: -Infinity, y: 0 };
+      for (let k = 0; k < 3600; k++) {
+        const a = (k / 3600) * 2 * Math.PI;
+        const q = project([radius * Math.cos(a), radius * Math.sin(a), z]);
+        if (q.x < lo.x) lo = q;
+        if (q.x > hi.x) hi = q;
+      }
+      return [lo, hi];
+    };
+    const [topLeft, topRight] = ends(R, Hout);
+    const [bottomLeft, bottomRight] = ends(r, 0);
+    const wz = 150;
+    const [waterLeft, waterRight] = ends(r + ((R - r) * wz) / Hout, wz);
+    return { topLeft, topRight, bottomLeft, bottomRight, waterLeft, waterRight };
+  };
+  // Outside 28 / 22 / 25 cm; with a 1 cm base the inside is 28 / 22 / 24 cm (wall ignored).
+  const inside = { topDiameterCm: 28, bottomDiameterCm: 22, heightCm: 24 };
+  const opts = { wallCm: 0, baseCm: 1 };
+  const level = proportionsFromSilhouette(
+    silhouetteOf(camera([0, -1500, Hout / 2], [0, 0, Hout / 2], 5500)),
+  );
+
+  it('gets the proportions right to ~1% from a level photo at 1.5 m', () => {
+    expect(Math.abs(level.bottomPx / level.topPx / (22 / 28) - 1)).toBeLessThan(0.01);
+    expect(Math.abs(level.heightPx / level.topPx / (25 / 28) - 1)).toBeLessThan(0.015);
+  });
+
+  it('scales from the printed capacity', () => {
+    const d = scaleProportions(
+      level,
+      { kind: 'capacity', litres: frustumCapacityLitres(inside) },
+      opts,
+    );
+    expect(Math.abs(d.topDiameterCm / 28 - 1)).toBeLessThan(0.015);
+    expect(Math.abs(d.bottomDiameterCm / 22 - 1)).toBeLessThan(0.015);
+    expect(Math.abs(d.heightCm / 24 - 1)).toBeLessThan(0.02);
+    expect(Math.abs(frustumCapacityLitres(d) - frustumCapacityLitres(inside))).toBeLessThan(1e-6);
+    // A nominal capacity is the weakest scale source: ±7% in volume.
+    expect(d.scaleError).toBeGreaterThan(0.02);
+  });
+
+  it('scales from one measured length, or an echo depth', () => {
+    const byHeight = scaleProportions(level, { kind: 'length', which: 'height', cm: 25 }, opts);
+    expect(byHeight.heightCm).toBeCloseTo(24, 6);
+    expect(Math.abs(byHeight.topDiameterCm / 28 - 1)).toBeLessThan(0.015);
+    const byTop = scaleProportions(level, { kind: 'length', which: 'top', cm: 28 }, opts);
+    expect(byTop.topDiameterCm).toBeCloseTo(28, 6);
+    const byEcho = scaleProportions(level, { kind: 'depth', cm: 24, sigmaCm: 1.5 }, opts);
+    expect(byEcho.heightCm).toBeCloseTo(24, 6);
+    expect(byEcho.scaleError).toBeGreaterThan(byHeight.scaleError);
+  });
+
+  it('reads the waterline as a depth', () => {
+    const d = scaleProportions(level, { kind: 'length', which: 'height', cm: 25 }, opts);
+    expect(Math.abs(d.waterDepthCm! - 14)).toBeLessThan(0.3);
+  });
+
+  it('with a known shape, the waterline needs no scale at all', () => {
+    const w = waterDepthFromProportions(level, inside, 1)!;
+    expect(Math.abs(w.depthCm - 14)).toBeLessThan(0.3);
+    expect(w.sigmaCm).toBeLessThan(0.6);
+    expect(waterDepthFromProportions({ ...level, waterPx: null }, inside)).toBeNull();
+  });
+
+  it('a 5° pitch costs under 3% in the proportions', () => {
+    const tilted = proportionsFromSilhouette(
+      silhouetteOf(
+        camera([0, -1500, Hout / 2 - 1500 * Math.tan((5 * Math.PI) / 180)], [0, 0, Hout / 2], 5500),
+      ),
+    );
+    expect(Math.abs(tilted.heightPx / tilted.topPx / (25 / 28) - 1)).toBeLessThan(0.03);
   });
 });
