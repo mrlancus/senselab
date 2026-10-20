@@ -12,6 +12,7 @@ const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
 page.on('console', (m) => m.type() === 'error' && errors.push(`console: ${m.text()}`));
 await page.goto(`${BASE}/metal?debug=1`);
+/* global window, DeviceMotionEvent, DeviceOrientationEvent -- this callback runs in the page */
 await page.evaluate(() => {
   const t0 = performance.now();
   const turn = (t) => 25 * Math.sin(1.3 * t);
