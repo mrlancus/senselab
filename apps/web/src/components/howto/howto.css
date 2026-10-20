@@ -309,3 +309,325 @@
     opacity: 1;
   }
 }
+
+/* Echo: a ping travels out by --travel, then its echo travels back. */
+.a-ping {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  animation: a-ping 1.6s ease-in infinite;
+}
+.a-ping.back {
+  stroke: var(--water);
+  animation-name: a-ping-back;
+}
+.h .a-ping {
+  animation-name: a-ping-h;
+}
+.h .a-ping.back {
+  animation-name: a-ping-h-back;
+}
+@keyframes a-ping {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  5%,
+  40% {
+    opacity: 1;
+  }
+  45%,
+  100% {
+    transform: translateY(var(--travel));
+    opacity: 0;
+  }
+}
+@keyframes a-ping-back {
+  0%,
+  45% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  50%,
+  85% {
+    opacity: 1;
+  }
+  90%,
+  100% {
+    transform: translateY(calc(-1 * var(--travel)));
+    opacity: 0;
+  }
+}
+@keyframes a-ping-h {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  5%,
+  40% {
+    opacity: 1;
+  }
+  45%,
+  100% {
+    transform: translateX(var(--travel));
+    opacity: 0;
+  }
+}
+@keyframes a-ping-h-back {
+  0%,
+  45% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  50%,
+  85% {
+    opacity: 1;
+  }
+  90%,
+  100% {
+    transform: translateX(calc(-1 * var(--travel)));
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .a-ping {
+    opacity: 0.85;
+    transform: none;
+  }
+}
+
+/* Clap: hands meet at 50 % of the cycle, in step with the on-hit ripples. */
+.a-hand {
+  fill: var(--warn);
+  opacity: 0.85;
+}
+.a-clap-l,
+.a-clap-r {
+  animation: a-clap-l 1.6s ease-in infinite;
+}
+.a-clap-r {
+  animation-name: a-clap-r;
+}
+@keyframes a-clap-l {
+  0%,
+  30%,
+  62%,
+  100% {
+    transform: translateX(-14px);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+@keyframes a-clap-r {
+  0%,
+  30%,
+  62%,
+  100% {
+    transform: translateX(14px);
+  }
+  50% {
+    transform: translateX(-3px);
+  }
+}
+.wide .a-ripple {
+  stroke-width: 1.5;
+}
+.on-hit.wide .a-ripple {
+  animation-name: a-hit-wide;
+}
+@keyframes a-hit-wide {
+  0%,
+  49% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(5);
+    opacity: 0;
+  }
+}
+
+.a-card {
+  fill: var(--warn);
+  stroke: var(--text);
+  stroke-width: 1;
+}
+.a-flash {
+  fill: var(--surface);
+  opacity: 0;
+  animation: a-flash 2.4s ease-out infinite;
+}
+@keyframes a-flash {
+  0%,
+  60%,
+  100% {
+    opacity: 0;
+  }
+  65% {
+    opacity: 1;
+  }
+}
+
+.a-box {
+  fill: var(--surface);
+  stroke: var(--text);
+  stroke-width: 2;
+}
+/* Knock: the fist moves in and hits at 50 % of the cycle, with the on-hit ripples. */
+.a-knock {
+  animation: a-knock 1.6s ease-in infinite;
+}
+@keyframes a-knock {
+  0%,
+  30%,
+  62%,
+  100% {
+    transform: translateX(16px);
+  }
+  50% {
+    transform: translateX(0);
+  }
+}
+.a-melon {
+  fill: #3f8f4a;
+  stroke: var(--text);
+  stroke-width: 1.5;
+}
+.a-melon-stripe {
+  fill: none;
+  stroke: #2a6a33;
+  stroke-width: 3;
+}
+
+.a-screw {
+  fill: var(--muted);
+}
+.a-screw-x {
+  stroke: var(--surface);
+  stroke-width: 1.2;
+}
+/* Metal: the phone slides across; the screw "lights up" as it passes over. */
+.a-slide {
+  animation: a-slide 3.2s ease-in-out infinite;
+}
+@keyframes a-slide {
+  0%,
+  100% {
+    transform: translateX(-50px);
+  }
+  50% {
+    transform: translateX(50px);
+  }
+}
+.on-near .a-ripple {
+  stroke: var(--warn);
+  animation: a-near 1.6s ease-out infinite;
+}
+@keyframes a-near {
+  0%,
+  15%,
+  35%,
+  100% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1.4);
+    opacity: 0.9;
+  }
+}
+
+.a-led {
+  fill: var(--warn);
+}
+/* Smoke alarm: three ripples close together, then a pause (temporal-3, sped up). */
+.t3 .a-ripple {
+  stroke: var(--warn);
+  animation: a-t3 2.4s ease-out infinite;
+}
+.t3 .a-ripple.d1 {
+  animation-delay: 0.3s;
+}
+.t3 .a-ripple.d2 {
+  animation-delay: 0.6s;
+}
+@keyframes a-t3 {
+  0% {
+    transform: scale(0.3);
+    opacity: 0.9;
+  }
+  35%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+.a-bell {
+  font-size: 14px;
+  animation: a-blink 2.4s ease-in-out infinite;
+}
+.a-note {
+  font-size: 16px;
+  fill: var(--accent);
+  animation: a-float 1.8s ease-out infinite;
+}
+.a-note.d1 {
+  animation-delay: 0.45s;
+}
+@keyframes a-float {
+  0% {
+    transform: translate(0, 6px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(10px, -10px);
+    opacity: 0;
+  }
+}
+
+.a-chest {
+  fill: var(--warn);
+  opacity: 0.8;
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: a-breathe 4s ease-in-out infinite;
+}
+@keyframes a-breathe {
+  0%,
+  100% {
+    transform: scaleY(0.6);
+  }
+  45% {
+    transform: scaleY(1.15);
+  }
+}
+
+.a-tape {
+  fill: #e0b23c;
+}
+/* The phone hops from the near mark to the far one. */
+.a-hop {
+  animation: a-hop 4s ease-in-out infinite;
+}
+@keyframes a-hop {
+  0%,
+  40% {
+    transform: translateX(0);
+  }
+  55%,
+  95% {
+    transform: translateX(80px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}

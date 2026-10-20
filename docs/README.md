@@ -5,3 +5,13 @@ real phones.
 
 - [architecture.md](architecture.md): how the pieces fit together
 - [sensor-check.md](sensor-check.md): per-device speaker/mic response, chirp band choice
+- [tap-level.md](tap-level.md): liquid level from the pitch of a tap, per-container calibration
+- [echo-level.md](echo-level.md): liquid level by echo ranging (chirps, matched filter, CLEAN)
+- [ruler.md](ruler.md): sonar ruler, the echo engine pointed at a wall
+- [room-acoustics.md](room-acoustics.md): RT60 from a clap (Schroeder integration, octave bands)
+- [camera-level.md](camera-level.md): dimensions and waterline from photos with a card or A4 for scale; AR tape (experimental)
+- [knock-id.md](knock-id.md): Knock ID (features + kNN on your labels) and fruit firmness (S = f²·m^⅔)
+- [metal-finder.md](metal-finder.md): magnetometer |B|, or compass − gyro deflection (works on iPhone)
+- [sound-alerts.md](sound-alerts.md): smoke (T3) and CO (T4) alarms, plus taught sounds by fingerprint
+- [presence.md](presence.md): sonar motion and breathing rate (range profiles, clutter removal, phase)
+- [air-temperature.md](air-temperature.md): experimental, speed of sound over a measured baseline

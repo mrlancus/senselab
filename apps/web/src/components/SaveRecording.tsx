@@ -12,11 +12,14 @@ export function SaveRecording({
   sampleRate,
   mode,
   labels,
+  onSaved,
 }: {
   samples: Float32Array;
   sampleRate: number;
   mode: RecordingMode;
   labels: RecordingLabels;
+  /** Lets the caller attach the recording to a calibration point or measurement. */
+  onSaved?: (key: string) => void;
 }) {
   const [note, setNote] = useState('');
   const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -36,6 +39,7 @@ export function SaveRecording({
         },
       });
       setState('saved');
+      onSaved?.(rec.key);
       setMessage(`Saved ${(rec.sizeBytes / 1024).toFixed(0)} KB · ${rec.key.slice(0, 8)}`);
     } catch (e) {
       setState('error');
