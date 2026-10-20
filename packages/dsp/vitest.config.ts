@@ -1,0 +1,14 @@
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    include: ['test/**/*.test.ts'],
+    // Numeric tests (FFTs over seconds of audio) run several times slower under coverage on
+    // CI runners than locally.
+    testTimeout: 20000,
+    coverage: {
+      include: ['src/**'],
+      thresholds: { lines: 90, functions: 90, branches: 80, statements: 90 },
+    },
+  },
+});
