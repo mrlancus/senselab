@@ -2,7 +2,8 @@ import { chromium } from 'playwright';
 import { readFileSync } from 'node:fs';
 // Usage: python3 scripts/e2e/gen-photos.py OUT && node scripts/e2e/camera-flow.mjs OUT
 // Needs `wrangler dev` (apps/api) on :8787 serving a fresh build.
-// Expected: top 28.0, bottom ≈ 22, height 24.0 cm; waterline 14.0 cm ≈ 7.0 L.
+// Expected: no-reference ≈ 28 / 22 / 24 cm from the printed 11.8 L; card 28.0 / 22.0 / 24.0 cm;
+// waterline (no card) ≈ 14.0 cm ≈ 6.2 L.
 const S = process.argv[2];
 const BASE = process.env.BASE_URL ?? 'http://localhost:8787';
 const taps = JSON.parse(readFileSync(`${S}/photos.json`, 'utf8'));
@@ -49,7 +50,15 @@ await page.getByRole('button', { name: 'Create container' }).click();
 await page.waitForURL(/\/level\/[0-9a-f-]{36}$/);
 const url = page.url();
 
+// 1. No reference: one side photo + the printed capacity (11.8 L brim-full; wall 0.3 cm).
 await page.goto(url + '/camera');
+await photo(0, 'side.png', 'side', ['top', 'bottom', 'water'], ['water']);
+await page.getByLabel(/Capacity printed/).fill('11.8');
+console.log('NO-REF', (await page.locator('dl.kv').innerText()).replace(/\n/g, ' | '));
+await page.screenshot({ path: `${S}/camera-noref.png`, fullPage: true });
+
+// 2. Card + top view.
+await page.getByRole('tab', { name: 'Card or A4 sheet' }).click();
 await photo(0, 'top.png', 'top', ['card', 'rim'], ['rim']);
 console.log('TOP', await page.getByText(/Inside top ⌀/).innerText());
 await photo(
@@ -67,7 +76,7 @@ await page.waitForURL(url);
 console.log('SAVED', await page.locator('p.muted.small').first().innerText());
 
 await page.goto(url + '/waterline');
-await photo(0, 'side.png', 'side', ['card', 'baseFront', 'waterFront']);
+await photo(0, 'side.png', 'side', ['top', 'bottom', 'water']);
 console.log(
   'WATER',
   await page.locator('.big-number').innerText(),

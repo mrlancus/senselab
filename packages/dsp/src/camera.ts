@@ -293,3 +293,155 @@ export function waterDepthWithShape(
   const outer = shape.heightCm + baseThicknessCm;
   return Math.max(0, (waterSlantCm * outer) / Math.hypot(outer, step) - baseThicknessCm);
 }
+
+// ---------------------------------------------------------------------------------------
+// Without a reference object: proportions from one side photo, scale from one number.
+// ---------------------------------------------------------------------------------------
+
+export interface SilhouetteInput {
+  /** Left and right ends of the rim, and of the base, in a level side photo. */
+  topLeft: Point;
+  topRight: Point;
+  bottomLeft: Point;
+  bottomRight: Point;
+  /** Left and right ends of the waterline (translucent containers), optional. */
+  waterLeft?: Point | null;
+  waterRight?: Point | null;
+}
+
+export interface Proportions {
+  /** Outside widths and height in photo pixels, measured in the plane of the axis. */
+  topPx: number;
+  bottomPx: number;
+  heightPx: number;
+  /** Base → waterline along the axis, px. */
+  waterPx: number | null;
+  /** Relative error (1σ) from tap precision. */
+  tapError: number;
+}
+
+const mid = (a: Point, b: Point) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+
+/**
+ * The silhouette ends of the rim and base lie (almost) in the plane through the axis that
+ * faces the camera, so a level photo shows that plane as a similarity: ratios are true to
+ * ~1% at 1.5 m (the ends sit r²/D in front of the axis, slightly more for the wider rim).
+ * Height is measured along the axis (mid-base → mid-rim), so a small roll doesn't matter.
+ */
+export function proportionsFromSilhouette(s: SilhouetteInput, tapPx = 2): Proportions {
+  const mTop = mid(s.topLeft, s.topRight);
+  const mBot = mid(s.bottomLeft, s.bottomRight);
+  const axis = { x: mTop.x - mBot.x, y: mTop.y - mBot.y };
+  const heightPx = Math.hypot(axis.x, axis.y);
+  let waterPx: number | null = null;
+  if (s.waterLeft && s.waterRight) {
+    const w = mid(s.waterLeft, s.waterRight);
+    // Project onto the axis.
+    waterPx = ((w.x - mBot.x) * axis.x + (w.y - mBot.y) * axis.y) / heightPx;
+  }
+  const topPx = dist(s.topLeft, s.topRight);
+  const bottomPx = dist(s.bottomLeft, s.bottomRight);
+  return {
+    topPx,
+    bottomPx,
+    heightPx,
+    waterPx,
+    tapError: (Math.SQRT2 * tapPx) / Math.min(topPx, bottomPx, heightPx),
+  };
+}
+
+export type ScaleSource =
+  /** The capacity printed or moulded on the container (brim-full), litres. */
+  | { kind: 'capacity'; litres: number }
+  /** One outside length measured by any means, cm. */
+  | { kind: 'length'; which: 'height' | 'top'; cm: number }
+  /** Inside depth (rim to floor), e.g. an echo reading of the empty container, cm. */
+  | { kind: 'depth'; cm: number; sigmaCm: number };
+
+export interface ScaledDimensions extends BucketDimensions {
+  /** cm per photo pixel. */
+  cmPerPx: number;
+  /** Relative 1σ error of the scale (source + proportions). */
+  scaleError: number;
+}
+
+/**
+ * Inside dimensions from silhouette proportions and one known number. Wall and base
+ * thickness turn the outside silhouette into inside dimensions; the capacity case solves
+ * for the scale that makes the inside frustum hold exactly that volume (bisection).
+ *
+ * Errors (1σ): a printed capacity is usually brim-full but may be a fill line, so ±7% in
+ * volume (≈ ±2.3% in length); a measured length ±0.3 cm; perspective ±1%.
+ */
+export function scaleProportions(
+  p: Proportions,
+  source: ScaleSource,
+  opts: { wallCm?: number; baseCm?: number } = {},
+): ScaledDimensions {
+  const wall = opts.wallCm ?? 0.3;
+  const base = opts.baseCm ?? 1;
+  const inside = (k: number) => ({
+    topDiameterCm: Math.max(0, k * p.topPx - 2 * wall),
+    bottomDiameterCm: Math.max(0, k * p.bottomPx - 2 * wall),
+    heightCm: Math.max(0, k * p.heightPx - base),
+  });
+  const volume = (k: number) => {
+    const d = inside(k);
+    const r0 = d.bottomDiameterCm / 2;
+    const r1 = d.topDiameterCm / 2;
+    return (Math.PI * d.heightCm * (r0 * r0 + r0 * r1 + r1 * r1)) / 3 / 1000;
+  };
+
+  let k: number;
+  let sourceError: number;
+  if (source.kind === 'capacity') {
+    let lo = 0;
+    let hi = 1;
+    while (volume(hi) < source.litres && hi < 1e6) hi *= 2;
+    for (let i = 0; i < 80; i++) {
+      const m = (lo + hi) / 2;
+      if (volume(m) < source.litres) lo = m;
+      else hi = m;
+    }
+    k = (lo + hi) / 2;
+    sourceError = 0.07 / 3;
+  } else if (source.kind === 'length') {
+    const px = source.which === 'height' ? p.heightPx : p.topPx;
+    k = source.cm / px;
+    sourceError = 0.3 / source.cm;
+  } else {
+    k = (source.cm + base) / p.heightPx;
+    sourceError = source.sigmaCm / (source.cm + base);
+  }
+  const scaleError = Math.hypot(sourceError, p.tapError, 0.01);
+  const d = inside(k);
+  const water = p.waterPx != null ? Math.max(0, k * p.waterPx - base) : null;
+  return {
+    ...d,
+    waterDepthCm: water,
+    cmPerPx: k,
+    scaleError,
+    uncertainty: {
+      topCm: d.topDiameterCm * scaleError,
+      bottomCm: d.bottomDiameterCm * scaleError,
+      heightCm: Math.hypot(d.heightCm * scaleError, 0.3),
+    },
+  };
+}
+
+/**
+ * Water depth for a container of known shape from a level side photo, no reference:
+ * the waterline's fraction of the outside height, times that height, minus the base.
+ */
+export function waterDepthFromProportions(
+  p: Proportions,
+  shape: { heightCm: number },
+  baseCm = 1,
+): { depthCm: number; sigmaCm: number } | null {
+  if (p.waterPx == null) return null;
+  const outer = shape.heightCm + baseCm;
+  return {
+    depthCm: Math.max(0, (p.waterPx / p.heightPx) * outer - baseCm),
+    sigmaCm: Math.hypot(p.tapError * outer, 0.01 * outer, 0.3),
+  };
+}

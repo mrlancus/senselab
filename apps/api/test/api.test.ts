@@ -207,3 +207,54 @@ describe('recordings', () => {
     expect(huge.status).toBe(413);
   });
 });
+
+describe('examples', () => {
+  const knock = (label: string) => ({
+    mode: 'knock',
+    label,
+    data: { version: 1, vector: [0.1, 0.2] },
+  });
+
+  it('adds, lists per mode and device, and deletes by id or label', async () => {
+    for (const l of ['glass', 'glass', 'wood']) {
+      const res = await call('/examples', { method: 'POST', body: JSON.stringify(knock(l)) });
+      expect(res.status).toBe(201);
+    }
+    await call('/examples', {
+      method: 'POST',
+      body: JSON.stringify({ mode: 'fruit', label: 'melon', data: { s: 1 } }),
+    });
+    const list = (await (await call('/examples?mode=knock')).json()) as {
+      id: string;
+      label: string;
+      data: unknown;
+    }[];
+    expect(list.map((e) => e.label)).toEqual(['glass', 'glass', 'wood']);
+    expect(list[0].data).toEqual({ version: 1, vector: [0.1, 0.2] });
+    expect(await (await call('/examples?mode=knock', { device: DEVICE_B })).json()).toEqual([]);
+
+    expect(
+      (await call(`/examples/${list[2].id}`, { method: 'DELETE', device: DEVICE_B })).status,
+    ).toBe(404);
+    expect((await call(`/examples/${list[2].id}`, { method: 'DELETE' })).status).toBe(204);
+    const del = await call('/examples?mode=knock&label=glass', { method: 'DELETE' });
+    expect(await del.json()).toEqual({ deleted: 2 });
+    expect(await (await call('/examples?mode=knock')).json()).toEqual([]);
+    expect(((await (await call('/examples?mode=fruit')).json()) as unknown[]).length).toBe(1);
+  });
+
+  it('validates mode, label and payload size', async () => {
+    expect((await call('/examples?mode=nope')).status).toBe(400);
+    expect((await call('/examples', { method: 'DELETE' })).status).toBe(400);
+    const bad = [
+      { ...knock('x'), mode: 'nope' },
+      { ...knock('  ') },
+      { ...knock('x'), data: { big: 'x'.repeat(70000) } },
+    ];
+    for (const b of bad) {
+      expect((await call('/examples', { method: 'POST', body: JSON.stringify(b) })).status).toBe(
+        400,
+      );
+    }
+  });
+});

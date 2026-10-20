@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { makeSweep, sweepOptions, type Spectrogram, type SweepAnalysis } from '@senselab/dsp';
-import { audio, type MicInfo } from '../audio/engine';
+import { audio, type MicInfo, type MicLease } from '../audio/engine';
 import { CapabilityList } from '../components/CapabilityList';
 import { HowTo } from '../components/howto/HowTo';
 import { MicListenAnim, PhoneOnTableAnim, PhoneTiltAnim } from '../components/howto/animations';
@@ -43,32 +43,45 @@ export function SensorCheck() {
   const [sweepError, setSweepError] = useState<string | null>(null);
   const [run, setRun] = useState<SweepRun | null>(null);
   const [profile, setProfile] = useState<AudioProfile | null>(loadAudioProfile);
+  // The live meter holds the mic open; it's released by "Stop" or on leaving the screen.
+  const meter = useRef<MicLease | null>(null);
+  const [metering, setMetering] = useState(false);
 
   useEffect(() => {
     detectCapabilities().then(setCaps);
+    return () => meter.current?.release();
   }, []);
 
   const startMic = async () => {
     setMicError(null);
     try {
-      setMic(await audio.start());
+      meter.current?.release();
+      meter.current = await audio.acquire();
+      setMic(meter.current.info);
+      setMetering(true);
     } catch (e) {
       setMicError(micErrorMessage(e));
     }
+  };
+  const stopMic = () => {
+    meter.current?.release();
+    meter.current = null;
+    setMetering(false);
   };
 
   const runSweep = async () => {
     setSweepError(null);
     setRun(null);
     try {
-      const info = mic ?? (await audio.start());
-      setMic(info);
-      const sr = info.sampleRate;
-      setSweepState('noise');
-      const noise = await audio.record(0.6);
-      setSweepState('sweep');
-      const emitted = makeSweep(sr, SWEEP_S);
-      const { recorded, emitIndex } = await audio.playAndRecord(emitted, PAD_S);
+      const { sr, noise, emitted, recorded, emitIndex } = await audio.withMic(async (info) => {
+        setMic(info);
+        const sr = info.sampleRate;
+        setSweepState('noise');
+        const noise = await audio.record(0.6);
+        setSweepState('sweep');
+        const emitted = makeSweep(sr, SWEEP_S);
+        return { sr, noise, emitted, ...(await audio.playAndRecord(emitted, PAD_S)) };
+      });
       setSweepState('analyse');
       const { analysis, correlation } = await runDsp('analyzeSweep', {
         sweep: sweepOptions(sr, SWEEP_S),
@@ -126,13 +139,18 @@ export function SensorCheck() {
             },
           ]}
         />
-        {!mic ? (
+        {!mic || !metering ? (
           <button className="primary block" onClick={startMic}>
-            Start microphone
+            {mic ? 'Start the level meter again' : 'Start microphone'}
           </button>
         ) : (
+          <button className="block" onClick={stopMic}>
+            Stop microphone
+          </button>
+        )}
+        {mic && (
           <>
-            <LiveMic />
+            {metering && <LiveMic />}
             <dl className="kv">
               <dt>Sample rate</dt>
               <dd className="mono">{mic.sampleRate} Hz</dd>
