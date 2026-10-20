@@ -338,3 +338,77 @@ export function MetalSweepAnim() {
     </svg>
   );
 }
+
+/** Sound alerts: a smoke alarm on the ceiling beeps in threes; the phone lights up. */
+export function SmokeAlarmAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <rect x="10" y="6" width="140" height="4" className="a-table" />
+      <rect x="58" y="10" width="44" height="10" rx="5" className="a-box" />
+      <circle cx="80" cy="20" r="3" className="a-led" />
+      <Ripples cx={80} cy={22} className="t3" />
+      <g transform="translate(66 52) scale(0.75)">
+        <Phone x={0} y={0} />
+      </g>
+      <text x="80" y="76" className="a-label a-bell" textAnchor="middle">
+        🔔
+      </text>
+    </svg>
+  );
+}
+
+/** Teaching a sound: a doorbell plays its chime next to the phone. */
+export function DoorbellAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <rect x="24" y="22" width="34" height="56" rx="6" className="a-box" />
+      <circle cx="41" cy="50" r="9" className="a-led" />
+      <text x="72" y="40" className="a-label a-note">
+        ♪
+      </text>
+      <text x="88" y="54" className="a-label a-note d1">
+        ♫
+      </text>
+      <g transform="translate(116 30) scale(0.75)">
+        <Phone x={0} y={0} />
+      </g>
+    </svg>
+  );
+}
+
+/** Presence: a person lying still, chest rising and falling; the phone pings from the side. */
+export function PresenceAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <rect x="40" y="62" width="112" height="14" rx="4" className="a-box" />
+      <circle cx="140" cy="54" r="7" className="a-hand" />
+      <path d="M58 62 q22 -12 44 0" className="a-chest" />
+      <rect x="6" y="66" width="22" height="10" rx="2" className="a-table" />
+      <g transform="translate(10 44) scale(0.42)">
+        <Phone x={0} y={0} />
+      </g>
+      <Ping d="M28 50 q4 6 0 12" travel={22} horizontal />
+    </svg>
+  );
+}
+
+/** Air temperature: a wall, a tape on the floor, and the phone at two marks. */
+export function TapeBaselineAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim" style={{ maxHeight: 120 }}>
+      <rect x="8" y="10" width="8" height="80" className="a-table" />
+      <rect x="16" y="82" width="136" height="6" rx="1" className="a-tape" />
+      {[40, 120].map((x) => (
+        <path key={x} d={`M${x} 80 v10`} className="a-arc" />
+      ))}
+      <g className="a-hop">
+        <g transform="rotate(-90 40 60)">
+          <Phone x={30} y={42} w={20} h={36} />
+        </g>
+      </g>
+      <text x="80" y="76" className="a-label" textAnchor="middle">
+        ← 100 cm →
+      </text>
+    </svg>
+  );
+}

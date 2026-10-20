@@ -53,15 +53,22 @@ export const modes: ModeInfo[] = [
   {
     path: '/alerts',
     title: 'Sound alerts',
-    blurb: 'Washer done, smoke alarm, doorbell.',
+    blurb: 'Smoke and CO alarms out of the box; teach it the doorbell or washer chime.',
     icon: '🔔',
-    status: 'soon',
+    status: 'ready',
   },
   {
     path: '/presence',
     title: 'Presence',
-    blurb: 'Sonar breathing / motion detection.',
+    blurb: 'Near-ultrasonic sonar: movement nearby, and breathing rate when still.',
     icon: '🫁',
-    status: 'soon',
+    status: 'ready',
+  },
+  {
+    path: '/temperature',
+    title: 'Air temperature',
+    blurb: 'Experimental: the speed of sound over a measured distance, turned into °C.',
+    icon: '🌡️',
+    status: 'ready',
   },
 ];
