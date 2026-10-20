@@ -60,3 +60,13 @@ node scripts/e2e/metal-flow.mjs /tmp/out
 ```
 
 Expected: `AT 5.5 s Nothing`, `AT 7 s Metal!`, `AT 9.5 s Nothing`.
+
+Sound alerts:
+
+```sh
+python3 scripts/e2e/gen-alerts.py /tmp/al && python3 scripts/e2e/gen-knocks.py /tmp/al
+node scripts/e2e/alerts-flow.mjs /tmp/al
+```
+
+Expected: smoke file → `Smoke / fire alarm`, doorbell file → `doorbell`, knocks → `null`, and
+`mic: false` after every Stop.

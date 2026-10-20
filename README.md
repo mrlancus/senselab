@@ -82,4 +82,5 @@ pnpm build
 | Room acoustics (RT60)        | ready (synthetic-verified)                       | [docs/room-acoustics.md](docs/room-acoustics.md) |
 | Knock ID + fruit firmness    | ready (synthetic-verified)                       | [docs/knock-id.md](docs/knock-id.md)             |
 | Metal finder                 | ready (synthetic-verified)                       | [docs/metal-finder.md](docs/metal-finder.md)     |
-| Sound alerts, presence       | later                                            |                                                  |
+| Sound alerts                 | ready (synthetic-verified)                       | [docs/sound-alerts.md](docs/sound-alerts.md)     |
+| Presence                     | later                                            |                                                  |

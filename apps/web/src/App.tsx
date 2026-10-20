@@ -9,6 +9,7 @@ import { CameraMeasure } from './screens/level/CameraMeasure';
 import { ContainerDetail } from './screens/level/ContainerDetail';
 import { ContainerForm } from './screens/level/ContainerForm';
 import { LevelHome } from './screens/level/LevelHome';
+import { Alerts } from './screens/Alerts';
 import { Knock } from './screens/Knock';
 import { Metal } from './screens/Metal';
 import { Room } from './screens/Room';
@@ -28,6 +29,7 @@ const screens: [string, (p: Record<string, string>) => ReactNode][] = [
   ['/room', () => <Room />],
   ['/knock', () => <Knock />],
   ['/metal', () => <Metal />],
+  ['/alerts', () => <Alerts />],
 ];
 
 export function App() {

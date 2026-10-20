@@ -542,3 +542,54 @@
     opacity: 0.9;
   }
 }
+
+.a-led {
+  fill: var(--warn);
+}
+/* Smoke alarm: three ripples close together, then a pause (temporal-3, sped up). */
+.t3 .a-ripple {
+  stroke: var(--warn);
+  animation: a-t3 2.4s ease-out infinite;
+}
+.t3 .a-ripple.d1 {
+  animation-delay: 0.3s;
+}
+.t3 .a-ripple.d2 {
+  animation-delay: 0.6s;
+}
+@keyframes a-t3 {
+  0% {
+    transform: scale(0.3);
+    opacity: 0.9;
+  }
+  35%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+.a-bell {
+  font-size: 14px;
+  animation: a-blink 2.4s ease-in-out infinite;
+}
+.a-note {
+  font-size: 16px;
+  fill: var(--accent);
+  animation: a-float 1.8s ease-out infinite;
+}
+.a-note.d1 {
+  animation-delay: 0.45s;
+}
+@keyframes a-float {
+  0% {
+    transform: translate(0, 6px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(10px, -10px);
+    opacity: 0;
+  }
+}

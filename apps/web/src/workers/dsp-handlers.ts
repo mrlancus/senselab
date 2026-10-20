@@ -1,6 +1,11 @@
 import {
   ampToDb,
   analyzeEcho,
+  bandSpectrogram,
+  detectAlarm,
+  makeFingerprint,
+  matchFingerprint,
+  type Fingerprint,
   analyzeRoom,
   analyzeSweep,
   analyzeTaps,
@@ -87,6 +92,19 @@ export const handlers = {
       };
     });
   },
+  /** Sound alerts: smoke/CO pattern plus every taught sound's best match in the window. */
+  alertsScan: (
+    x: Float32Array,
+    sampleRate: number,
+    templates: { label: string; fp: Fingerprint }[],
+  ) => {
+    const live = bandSpectrogram(x, sampleRate);
+    return {
+      alarm: detectAlarm(x, sampleRate),
+      matches: templates.map((t) => ({ label: t.label, ...matchFingerprint(live, t.fp) })),
+    };
+  },
+  makeFingerprint: (x: Float32Array, sampleRate: number) => makeFingerprint(x, sampleRate),
   /** Fruit: the first strong resonance of each tap, 60–1500 Hz. */
   fruitTaps: (x: Float32Array, sampleRate: number) => {
     const onsets = detectOnsets(x, sampleRate, { minGapS: 0.25 });

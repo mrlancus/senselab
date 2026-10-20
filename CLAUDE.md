@@ -102,3 +102,4 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
 - [x] Room acoustics RT60 (synthetic-verified)
 - [x] Knock ID + fruit firmness (synthetic-verified); examples in D1 `examples` (0002)
 - [x] Metal finder: Magnetometer |B| or compass − gyro (synthetic-verified)
+- [x] Sound alerts: smoke T3 / CO T4 + taught fingerprints (synthetic-verified)

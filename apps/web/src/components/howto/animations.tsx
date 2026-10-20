@@ -338,3 +338,40 @@ export function MetalSweepAnim() {
     </svg>
   );
 }
+
+/** Sound alerts: a smoke alarm on the ceiling beeps in threes; the phone lights up. */
+export function SmokeAlarmAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <rect x="10" y="6" width="140" height="4" className="a-table" />
+      <rect x="58" y="10" width="44" height="10" rx="5" className="a-box" />
+      <circle cx="80" cy="20" r="3" className="a-led" />
+      <Ripples cx={80} cy={22} className="t3" />
+      <g transform="translate(66 52) scale(0.75)">
+        <Phone x={0} y={0} />
+      </g>
+      <text x="80" y="76" className="a-label a-bell" textAnchor="middle">
+        🔔
+      </text>
+    </svg>
+  );
+}
+
+/** Teaching a sound: a doorbell plays its chime next to the phone. */
+export function DoorbellAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <rect x="24" y="22" width="34" height="56" rx="6" className="a-box" />
+      <circle cx="41" cy="50" r="9" className="a-led" />
+      <text x="72" y="40" className="a-label a-note">
+        ♪
+      </text>
+      <text x="88" y="54" className="a-label a-note d1">
+        ♫
+      </text>
+      <g transform="translate(116 30) scale(0.75)">
+        <Phone x={0} y={0} />
+      </g>
+    </svg>
+  );
+}

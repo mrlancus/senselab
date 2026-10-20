@@ -53,9 +53,9 @@ export const modes: ModeInfo[] = [
   {
     path: '/alerts',
     title: 'Sound alerts',
-    blurb: 'Washer done, smoke alarm, doorbell.',
+    blurb: 'Smoke and CO alarms out of the box; teach it the doorbell or washer chime.',
     icon: '🔔',
-    status: 'soon',
+    status: 'ready',
   },
   {
     path: '/presence',
