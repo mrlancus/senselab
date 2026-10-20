@@ -4,6 +4,9 @@ import {
   type CalibrationPointInput,
   type Container,
   type ContainerInput,
+  type Example,
+  type ExampleInput,
+  type ExampleMode,
   type HealthResponse,
   type Measurement,
   type MeasurementInput,
@@ -82,4 +85,12 @@ export const api = {
     return res.arrayBuffer();
   },
   deleteRecording: (key: string) => request<void>(`/recordings/${key}`, { method: 'DELETE' }),
+  listExamples: (mode: ExampleMode) => request<Example[]>(`/examples?mode=${mode}`),
+  addExample: (input: ExampleInput) =>
+    request<Example>('/examples', { method: 'POST', body: JSON.stringify(input) }),
+  deleteExample: (id: string) => request<void>(`/examples/${id}`, { method: 'DELETE' }),
+  deleteExampleLabel: (mode: ExampleMode, label: string) =>
+    request<{ deleted: number }>(`/examples?mode=${mode}&label=${encodeURIComponent(label)}`, {
+      method: 'DELETE',
+    }),
 };

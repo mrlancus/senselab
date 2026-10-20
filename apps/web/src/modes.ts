@@ -24,9 +24,10 @@ export const modes: ModeInfo[] = [
   {
     path: '/knock',
     title: 'Knock ID',
-    blurb: 'Identify objects by the sound of a knock.',
+    blurb:
+      'Teach it what things sound like when knocked, then tell them apart. Fruit firmness too.',
     icon: '✊',
-    status: 'soon',
+    status: 'ready',
   },
   {
     path: '/room',
@@ -45,22 +46,29 @@ export const modes: ModeInfo[] = [
   {
     path: '/metal',
     title: 'Metal finder',
-    blurb: 'Magnetometer-based (Android Chrome).',
+    blurb: 'Iron and steel by how they bend the magnetic field. Works on iPhone too.',
     icon: '🧲',
-    status: 'soon',
+    status: 'ready',
   },
   {
     path: '/alerts',
     title: 'Sound alerts',
-    blurb: 'Washer done, smoke alarm, doorbell.',
+    blurb: 'Smoke and CO alarms out of the box; teach it the doorbell or washer chime.',
     icon: '🔔',
-    status: 'soon',
+    status: 'ready',
   },
   {
     path: '/presence',
     title: 'Presence',
-    blurb: 'Sonar breathing / motion detection.',
+    blurb: 'Near-ultrasonic sonar: movement nearby, and breathing rate when still.',
     icon: '🫁',
-    status: 'soon',
+    status: 'ready',
+  },
+  {
+    path: '/temperature',
+    title: 'Air temperature',
+    blurb: 'Experimental: the speed of sound over a measured distance, turned into °C.',
+    icon: '🌡️',
+    status: 'ready',
   },
 ];

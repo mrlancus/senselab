@@ -1,5 +1,8 @@
 import type {
   CalibrationPoint,
+  Example,
+  ExampleInput,
+  ExampleMode,
   CalibrationPointInput,
   Container,
   ContainerInput,
@@ -49,6 +52,26 @@ interface RecordingRow {
   sample_rate: number | null;
   labels: string;
   created_at: string;
+}
+
+interface ExampleRow {
+  id: string;
+  mode: ExampleMode;
+  label: string;
+  data: string;
+  recording_key: string | null;
+  created_at: string;
+}
+
+function toExample(r: ExampleRow): Example {
+  return {
+    id: r.id,
+    mode: r.mode,
+    label: r.label,
+    data: JSON.parse(r.data) as Record<string, unknown>,
+    recordingKey: r.recording_key,
+    createdAt: r.created_at,
+  };
 }
 
 function toContainer(r: ContainerRow): Container {
@@ -296,5 +319,51 @@ export class Repo {
       .bind(id, this.ownerId)
       .run();
     return res.meta.changes > 0;
+  }
+
+  async listExamples(mode: ExampleMode): Promise<Example[]> {
+    const { results } = await this.db
+      .prepare('SELECT * FROM examples WHERE device_id = ? AND mode = ? ORDER BY created_at')
+      .bind(this.ownerId, mode)
+      .all<ExampleRow>();
+    return results.map(toExample);
+  }
+
+  async addExample(input: ExampleInput & { recordingKey: string | null }): Promise<Example> {
+    const id = crypto.randomUUID();
+    await this.db
+      .prepare(
+        'INSERT INTO examples (id, device_id, mode, label, data, recording_key) VALUES (?, ?, ?, ?, ?, ?)',
+      )
+      .bind(
+        id,
+        this.ownerId,
+        input.mode,
+        input.label,
+        JSON.stringify(input.data),
+        input.recordingKey,
+      )
+      .run();
+    const row = await this.db
+      .prepare('SELECT * FROM examples WHERE id = ?')
+      .bind(id)
+      .first<ExampleRow>();
+    return toExample(row!);
+  }
+
+  async deleteExample(id: string): Promise<boolean> {
+    const r = await this.db
+      .prepare('DELETE FROM examples WHERE id = ? AND device_id = ?')
+      .bind(id, this.ownerId)
+      .run();
+    return r.meta.changes > 0;
+  }
+
+  async deleteExampleLabel(mode: ExampleMode, label: string): Promise<number> {
+    const r = await this.db
+      .prepare('DELETE FROM examples WHERE device_id = ? AND mode = ? AND label = ?')
+      .bind(this.ownerId, mode, label)
+      .run();
+    return r.meta.changes;
   }
 }

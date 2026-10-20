@@ -473,3 +473,161 @@
     opacity: 1;
   }
 }
+
+.a-box {
+  fill: var(--surface);
+  stroke: var(--text);
+  stroke-width: 2;
+}
+/* Knock: the fist moves in and hits at 50 % of the cycle, with the on-hit ripples. */
+.a-knock {
+  animation: a-knock 1.6s ease-in infinite;
+}
+@keyframes a-knock {
+  0%,
+  30%,
+  62%,
+  100% {
+    transform: translateX(16px);
+  }
+  50% {
+    transform: translateX(0);
+  }
+}
+.a-melon {
+  fill: #3f8f4a;
+  stroke: var(--text);
+  stroke-width: 1.5;
+}
+.a-melon-stripe {
+  fill: none;
+  stroke: #2a6a33;
+  stroke-width: 3;
+}
+
+.a-screw {
+  fill: var(--muted);
+}
+.a-screw-x {
+  stroke: var(--surface);
+  stroke-width: 1.2;
+}
+/* Metal: the phone slides across; the screw "lights up" as it passes over. */
+.a-slide {
+  animation: a-slide 3.2s ease-in-out infinite;
+}
+@keyframes a-slide {
+  0%,
+  100% {
+    transform: translateX(-50px);
+  }
+  50% {
+    transform: translateX(50px);
+  }
+}
+.on-near .a-ripple {
+  stroke: var(--warn);
+  animation: a-near 1.6s ease-out infinite;
+}
+@keyframes a-near {
+  0%,
+  15%,
+  35%,
+  100% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1.4);
+    opacity: 0.9;
+  }
+}
+
+.a-led {
+  fill: var(--warn);
+}
+/* Smoke alarm: three ripples close together, then a pause (temporal-3, sped up). */
+.t3 .a-ripple {
+  stroke: var(--warn);
+  animation: a-t3 2.4s ease-out infinite;
+}
+.t3 .a-ripple.d1 {
+  animation-delay: 0.3s;
+}
+.t3 .a-ripple.d2 {
+  animation-delay: 0.6s;
+}
+@keyframes a-t3 {
+  0% {
+    transform: scale(0.3);
+    opacity: 0.9;
+  }
+  35%,
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+.a-bell {
+  font-size: 14px;
+  animation: a-blink 2.4s ease-in-out infinite;
+}
+.a-note {
+  font-size: 16px;
+  fill: var(--accent);
+  animation: a-float 1.8s ease-out infinite;
+}
+.a-note.d1 {
+  animation-delay: 0.45s;
+}
+@keyframes a-float {
+  0% {
+    transform: translate(0, 6px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(10px, -10px);
+    opacity: 0;
+  }
+}
+
+.a-chest {
+  fill: var(--warn);
+  opacity: 0.8;
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: a-breathe 4s ease-in-out infinite;
+}
+@keyframes a-breathe {
+  0%,
+  100% {
+    transform: scaleY(0.6);
+  }
+  45% {
+    transform: scaleY(1.15);
+  }
+}
+
+.a-tape {
+  fill: #e0b23c;
+}
+/* The phone hops from the near mark to the far one. */
+.a-hop {
+  animation: a-hop 4s ease-in-out infinite;
+}
+@keyframes a-hop {
+  0%,
+  40% {
+    transform: translateX(0);
+  }
+  55%,
+  95% {
+    transform: translateX(80px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
