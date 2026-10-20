@@ -375,3 +375,19 @@ export function DoorbellAnim() {
     </svg>
   );
 }
+
+/** Presence: a person lying still, chest rising and falling; the phone pings from the side. */
+export function PresenceAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <rect x="40" y="62" width="112" height="14" rx="4" className="a-box" />
+      <circle cx="140" cy="54" r="7" className="a-hand" />
+      <path d="M58 62 q22 -12 44 0" className="a-chest" />
+      <rect x="6" y="66" width="22" height="10" rx="2" className="a-table" />
+      <g transform="translate(10 44) scale(0.42)">
+        <Phone x={0} y={0} />
+      </g>
+      <Ping d="M28 50 q4 6 0 12" travel={22} horizontal />
+    </svg>
+  );
+}

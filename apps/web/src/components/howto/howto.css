@@ -593,3 +593,20 @@
     opacity: 0;
   }
 }
+
+.a-chest {
+  fill: var(--warn);
+  opacity: 0.8;
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: a-breathe 4s ease-in-out infinite;
+}
+@keyframes a-breathe {
+  0%,
+  100% {
+    transform: scaleY(0.6);
+  }
+  45% {
+    transform: scaleY(1.15);
+  }
+}

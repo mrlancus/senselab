@@ -60,8 +60,8 @@ export const modes: ModeInfo[] = [
   {
     path: '/presence',
     title: 'Presence',
-    blurb: 'Sonar breathing / motion detection.',
+    blurb: 'Near-ultrasonic sonar: movement nearby, and breathing rate when still.',
     icon: '🫁',
-    status: 'soon',
+    status: 'ready',
   },
 ];

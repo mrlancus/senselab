@@ -12,6 +12,7 @@ import { LevelHome } from './screens/level/LevelHome';
 import { Alerts } from './screens/Alerts';
 import { Knock } from './screens/Knock';
 import { Metal } from './screens/Metal';
+import { Presence } from './screens/Presence';
 import { Room } from './screens/Room';
 import { Ruler } from './screens/Ruler';
 import { SensorCheck } from './screens/SensorCheck';
@@ -30,6 +31,7 @@ const screens: [string, (p: Record<string, string>) => ReactNode][] = [
   ['/knock', () => <Knock />],
   ['/metal', () => <Metal />],
   ['/alerts', () => <Alerts />],
+  ['/presence', () => <Presence />],
 ];
 
 export function App() {

@@ -13,3 +13,4 @@ real phones.
 - [knock-id.md](knock-id.md): Knock ID (features + kNN on your labels) and fruit firmness (S = f²·m^⅔)
 - [metal-finder.md](metal-finder.md): magnetometer |B|, or compass − gyro deflection (works on iPhone)
 - [sound-alerts.md](sound-alerts.md): smoke (T3) and CO (T4) alarms, plus taught sounds by fingerprint
+- [presence.md](presence.md): sonar motion and breathing rate (range profiles, clutter removal, phase)

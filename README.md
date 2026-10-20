@@ -83,4 +83,4 @@ pnpm build
 | Knock ID + fruit firmness    | ready (synthetic-verified)                       | [docs/knock-id.md](docs/knock-id.md)             |
 | Metal finder                 | ready (synthetic-verified)                       | [docs/metal-finder.md](docs/metal-finder.md)     |
 | Sound alerts                 | ready (synthetic-verified)                       | [docs/sound-alerts.md](docs/sound-alerts.md)     |
-| Presence                     | later                                            |                                                  |
+| Presence (motion, breathing) | ready (synthetic-verified)                       | [docs/presence.md](docs/presence.md)             |

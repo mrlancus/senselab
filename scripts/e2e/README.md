@@ -70,3 +70,11 @@ node scripts/e2e/alerts-flow.mjs /tmp/al
 
 Expected: smoke file → `Smoke / fire alarm`, doorbell file → `doorbell`, knocks → `null`, and
 `mic: false` after every Stop.
+
+Presence (needs numpy):
+
+```sh
+python3 scripts/e2e/gen-presence.py /tmp/pr && node scripts/e2e/presence-flow.mjs /tmp/pr
+```
+
+Expected after ~25 s: `Someone still`, `Breathing: ≈ 15 per minute | at ≈ 60 cm`.
