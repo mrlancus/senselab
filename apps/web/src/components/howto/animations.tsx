@@ -391,3 +391,24 @@ export function PresenceAnim() {
     </svg>
   );
 }
+
+/** Air temperature: a wall, a tape on the floor, and the phone at two marks. */
+export function TapeBaselineAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim" style={{ maxHeight: 120 }}>
+      <rect x="8" y="10" width="8" height="80" className="a-table" />
+      <rect x="16" y="82" width="136" height="6" rx="1" className="a-tape" />
+      {[40, 120].map((x) => (
+        <path key={x} d={`M${x} 80 v10`} className="a-arc" />
+      ))}
+      <g className="a-hop">
+        <g transform="rotate(-90 40 60)">
+          <Phone x={30} y={42} w={20} h={36} />
+        </g>
+      </g>
+      <text x="80" y="76" className="a-label" textAnchor="middle">
+        ← 100 cm →
+      </text>
+    </svg>
+  );
+}
