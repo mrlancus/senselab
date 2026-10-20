@@ -90,7 +90,8 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
   `fruit`; JSON payload ≤ 64 KB). `components/ImpactRecorder.tsx` records a few knocks/taps
   with a live counter (and optional motion).
 - Data loading: `useAsync(fn, key)` (`lib/useAsync.ts`). Routes go in the `screens` list in
-  `App.tsx`; the first match wins.
+  `App.tsx`; the first match wins. Screens are lazy-loaded (`named(() => import(...), 'Name')`)
+  so each mode is its own chunk; add new screens the same way.
 
 ## Status
 
