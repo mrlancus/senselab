@@ -722,3 +722,6 @@ label.inline {
   min-height: 3.2em;
   align-items: flex-start;
 }
+.meter-fill.hot {
+  background: var(--warn);
+}

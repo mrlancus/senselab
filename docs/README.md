@@ -11,3 +11,4 @@ real phones.
 - [room-acoustics.md](room-acoustics.md): RT60 from a clap (Schroeder integration, octave bands)
 - [camera-level.md](camera-level.md): dimensions and waterline from photos with a card or A4 for scale; AR tape (experimental)
 - [knock-id.md](knock-id.md): Knock ID (features + kNN on your labels) and fruit firmness (S = f²·m^⅔)
+- [metal-finder.md](metal-finder.md): magnetometer |B|, or compass − gyro deflection (works on iPhone)

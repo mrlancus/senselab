@@ -46,9 +46,9 @@ export const modes: ModeInfo[] = [
   {
     path: '/metal',
     title: 'Metal finder',
-    blurb: 'Magnetometer-based (Android Chrome).',
+    blurb: 'Iron and steel by how they bend the magnetic field. Works on iPhone too.',
     icon: '🧲',
-    status: 'soon',
+    status: 'ready',
   },
   {
     path: '/alerts',

@@ -504,3 +504,41 @@
   stroke: #2a6a33;
   stroke-width: 3;
 }
+
+.a-screw {
+  fill: var(--muted);
+}
+.a-screw-x {
+  stroke: var(--surface);
+  stroke-width: 1.2;
+}
+/* Metal: the phone slides across; the screw "lights up" as it passes over. */
+.a-slide {
+  animation: a-slide 3.2s ease-in-out infinite;
+}
+@keyframes a-slide {
+  0%,
+  100% {
+    transform: translateX(-50px);
+  }
+  50% {
+    transform: translateX(50px);
+  }
+}
+.on-near .a-ripple {
+  stroke: var(--warn);
+  animation: a-near 1.6s ease-out infinite;
+}
+@keyframes a-near {
+  0%,
+  15%,
+  35%,
+  100% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1.4);
+    opacity: 0.9;
+  }
+}

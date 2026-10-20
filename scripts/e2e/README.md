@@ -52,3 +52,11 @@ python3 scripts/e2e/gen-knocks.py /tmp/knock && node scripts/e2e/knock-flow.mjs 
 
 Expected: `IDENTIFY wood | 100%…`, `FRUIT S ≈ 4.06 | 160 ± 0 Hz · 2 kg`. Run
 `pnpm migrate:local` in apps/api first (it adds the `examples` table).
+
+Metal finder (synthetic orientation and motion events, no fixture needed):
+
+```sh
+node scripts/e2e/metal-flow.mjs /tmp/out
+```
+
+Expected: `AT 5.5 s Nothing`, `AT 7 s Metal!`, `AT 9.5 s Nothing`.

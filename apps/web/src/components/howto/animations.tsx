@@ -322,3 +322,19 @@ export function FruitTapAnim() {
     </svg>
   );
 }
+
+/** Metal finder: the phone (flat, seen from above) slides over a board with a hidden screw. */
+export function MetalSweepAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <rect x="8" y="58" width="144" height="30" rx="3" className="a-box" />
+      <circle cx="80" cy="73" r="3.5" className="a-screw" />
+      <path d="M77.5 73 h5 M80 70.5 v5" className="a-screw-x" />
+      <g className="a-slide">
+        <rect x="64" y="14" width="32" height="36" rx="5" className="a-phone" />
+        <rect x="67" y="18" width="26" height="28" rx="2" className="a-screen" />
+      </g>
+      <Ripples cx={80} cy={73} className="on-near" />
+    </svg>
+  );
+}

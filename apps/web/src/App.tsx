@@ -10,6 +10,7 @@ import { ContainerDetail } from './screens/level/ContainerDetail';
 import { ContainerForm } from './screens/level/ContainerForm';
 import { LevelHome } from './screens/level/LevelHome';
 import { Knock } from './screens/Knock';
+import { Metal } from './screens/Metal';
 import { Room } from './screens/Room';
 import { Ruler } from './screens/Ruler';
 import { SensorCheck } from './screens/SensorCheck';
@@ -26,6 +27,7 @@ const screens: [string, (p: Record<string, string>) => ReactNode][] = [
   ['/ruler', () => <Ruler />],
   ['/room', () => <Room />],
   ['/knock', () => <Knock />],
+  ['/metal', () => <Metal />],
 ];
 
 export function App() {
