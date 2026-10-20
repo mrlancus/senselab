@@ -43,3 +43,12 @@ python3 scripts/e2e/gen-photos.py /tmp/cam && node scripts/e2e/camera-flow.mjs /
 
 Expected: no-reference `≈ 27.8 / 21.7 / 24.4 cm` (from the printed 11.8 L), card
 `28.0 / 22.0 / 24.0 cm`, waterline `14.0 cm ≈ 6.2 L`. Needs Pillow and numpy.
+
+Knock ID and fruit firmness:
+
+```sh
+python3 scripts/e2e/gen-knocks.py /tmp/knock && node scripts/e2e/knock-flow.mjs /tmp/knock
+```
+
+Expected: `IDENTIFY wood | 100%…`, `FRUIT S ≈ 4.06 | 160 ± 0 Hz · 2 kg`. Run
+`pnpm migrate:local` in apps/api first (it adds the `examples` table).

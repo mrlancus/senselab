@@ -80,5 +80,5 @@ pnpm build
 | Sonar ruler                          | ready (synthetic-verified)                       | [docs/ruler.md](docs/ruler.md)                   |
 | Liquid level: camera                 | ready (synthetic-verified; AR experimental)      | [docs/camera-level.md](docs/camera-level.md)     |
 | Room acoustics (RT60)                | ready (synthetic-verified)                       | [docs/room-acoustics.md](docs/room-acoustics.md) |
-| Knock ID                             | later                                            |                                                  |
+| Knock ID + fruit firmness            | ready (synthetic-verified)                       | [docs/knock-id.md](docs/knock-id.md)             |
 | Metal finder, sound alerts, presence | later                                            |                                                  |

@@ -85,6 +85,9 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
   Keep `ECHO_WINDOW_CM` fixed, because stored references must match the window length.
 - Camera: `components/PhotoTapper.tsx` collects taps in photo pixels (fine-adjust drag plus
   magnifier); the geometry is in `packages/dsp/src/camera.ts`.
+- Learned modes store labelled examples via `/api/examples?mode=…` (`knock`, `alert`,
+  `fruit`; JSON payload ≤ 64 KB). `components/ImpactRecorder.tsx` records a few knocks/taps
+  with a live counter (and optional motion).
 - Data loading: `useAsync(fn, key)` (`lib/useAsync.ts`). Routes go in the `screens` list in
   `App.tsx`; the first match wins.
 
@@ -96,3 +99,4 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
 - [x] Step 4: echo ranging + sonar ruler (synthetic-verified; awaiting a real-bucket test)
 - [x] Step 5: camera dimensions + waterline (synthetic-verified; WebXR AR untested on devices)
 - [x] Room acoustics RT60 (synthetic-verified)
+- [x] Knock ID + fruit firmness (synthetic-verified); examples in D1 `examples` (0002)
