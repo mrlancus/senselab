@@ -17,3 +17,7 @@ export * from './echo';
 export * from './echo-level';
 export * from './rt60';
 export * from './camera';
+export * from './knock';
+export * from './metal';
+export * from './alerts';
+export * from './presence';

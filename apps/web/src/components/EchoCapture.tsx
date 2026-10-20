@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { makeEchoTrain, type EchoAnalysis } from '@senselab/dsp';
 import type { RecordingLabels } from '@senselab/shared';
 import { audio, lastSampleRate } from '../audio/engine';
@@ -10,6 +10,7 @@ import {
   echoConfig,
   loadAirTemp,
   loadReference,
+  REFERENCE_EVENT,
   saveAirTemp,
   saveReference,
 } from '../lib/echo';
@@ -48,6 +49,7 @@ export function EchoCapture({
   onResult,
   onMeasured,
   renderResult,
+  fixedTempC,
 }: {
   steps: HowToStep[];
   minCm?: number;
@@ -61,6 +63,8 @@ export function EchoCapture({
   onMeasured?: (a: EchoAnalysis) => void;
   /** Shows the reading; defaults to the distance. */
   renderResult?: (a: EchoAnalysis) => ReactNode;
+  /** Use this air temperature and hide the setting (the temperature mode measures it). */
+  fixedTempC?: number;
 }) {
   const debug = useDebug();
   const [sr, setSr] = useState<number | null>(audio.info?.sampleRate ?? lastSampleRate());
@@ -72,13 +76,25 @@ export function EchoCapture({
     [cfg, refVersion],
   );
   const [skipRef, setSkipRef] = useState(false);
+  useEffect(() => {
+    const bump = () => {
+      // Another card may have opened the mic first: pick up its sample rate too.
+      setSr((cur) => cur ?? lastSampleRate());
+      setRefVersion((v) => v + 1);
+    };
+    window.addEventListener(REFERENCE_EVENT, bump);
+    return () => window.removeEventListener(REFERENCE_EVENT, bump);
+  }, []);
   const [phase, setPhase] = useState<'idle' | 'pinging' | 'analysing' | 'done'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [run, setRun] = useState<{ r: EchoRun; samples: Float32Array; emitIndex: number } | null>(
     null,
   );
   const [recordingKey, setRecordingKey] = useState<string | null>(null);
-  const [tempC, setTempC] = useState(loadAirTemp);
+  const [savedTempC, setTempC] = useState(loadAirTemp);
+  // The text box keeps what's typed (it may be empty or half-typed); only valid values apply.
+  const [tempText, setTempText] = useState(() => String(loadAirTemp()));
+  const tempC = fixedTempC ?? savedTempC;
   const fromProfile = sr ? echoBand(sr).fromProfile : true;
 
   const ping = async (asReference: boolean) => {
@@ -215,23 +231,28 @@ export function EchoCapture({
                   : 'Ping'}
           </button>
           <div className="row small muted" style={{ justifyContent: 'space-between' }}>
-            <label className="inline">
-              Air
-              <input
-                className="mini"
-                inputMode="decimal"
-                value={tempC}
-                onChange={(e) => {
-                  const v = parseFloat(e.target.value.replace(',', '.'));
-                  if (Number.isFinite(v) && v > -30 && v < 60) {
-                    setTempC(v);
-                    saveAirTemp(v);
-                  }
-                }}
-                aria-label="Air temperature in °C"
-              />
-              °C
-            </label>
+            {fixedTempC == null ? (
+              <label className="inline">
+                Air
+                <input
+                  className="mini"
+                  inputMode="decimal"
+                  value={tempText}
+                  onChange={(e) => {
+                    setTempText(e.target.value);
+                    const v = parseFloat(e.target.value.replace(',', '.'));
+                    if (Number.isFinite(v) && v > -30 && v < 60) {
+                      setTempC(v);
+                      saveAirTemp(v);
+                    }
+                  }}
+                  aria-label="Air temperature in °C"
+                />
+                °C
+              </label>
+            ) : (
+              <span />
+            )}
             {reference && cfg && (
               <button
                 className="small"
