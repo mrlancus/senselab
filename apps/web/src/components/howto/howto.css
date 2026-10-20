@@ -610,3 +610,24 @@
     transform: scaleY(1.15);
   }
 }
+
+.a-tape {
+  fill: #e0b23c;
+}
+/* The phone hops from the near mark to the far one. */
+.a-hop {
+  animation: a-hop 4s ease-in-out infinite;
+}
+@keyframes a-hop {
+  0%,
+  40% {
+    transform: translateX(0);
+  }
+  55%,
+  95% {
+    transform: translateX(80px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}

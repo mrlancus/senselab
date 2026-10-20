@@ -104,3 +104,4 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
 - [x] Metal finder: Magnetometer |B| or compass − gyro (synthetic-verified)
 - [x] Sound alerts: smoke T3 / CO T4 + taught fingerprints (synthetic-verified)
 - [x] Presence: sonar motion + breathing rate (synthetic-verified)
+- [x] Air temperature (experimental): echo baseline → speed of sound → °C

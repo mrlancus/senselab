@@ -14,3 +14,4 @@ real phones.
 - [metal-finder.md](metal-finder.md): magnetometer |B|, or compass − gyro deflection (works on iPhone)
 - [sound-alerts.md](sound-alerts.md): smoke (T3) and CO (T4) alarms, plus taught sounds by fingerprint
 - [presence.md](presence.md): sonar motion and breathing rate (range profiles, clutter removal, phase)
+- [air-temperature.md](air-temperature.md): experimental, speed of sound over a measured baseline

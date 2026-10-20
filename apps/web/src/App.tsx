@@ -16,6 +16,7 @@ import { Presence } from './screens/Presence';
 import { Room } from './screens/Room';
 import { Ruler } from './screens/Ruler';
 import { SensorCheck } from './screens/SensorCheck';
+import { Temperature } from './screens/Temperature';
 
 // First match wins, so literal paths go before parameterised ones.
 const screens: [string, (p: Record<string, string>) => ReactNode][] = [
@@ -32,6 +33,7 @@ const screens: [string, (p: Record<string, string>) => ReactNode][] = [
   ['/metal', () => <Metal />],
   ['/alerts', () => <Alerts />],
   ['/presence', () => <Presence />],
+  ['/temperature', () => <Temperature />],
 ];
 
 export function App() {

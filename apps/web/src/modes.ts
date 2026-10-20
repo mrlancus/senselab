@@ -64,4 +64,11 @@ export const modes: ModeInfo[] = [
     icon: '🫁',
     status: 'ready',
   },
+  {
+    path: '/temperature',
+    title: 'Air temperature',
+    blurb: 'Experimental: the speed of sound over a measured distance, turned into °C.',
+    icon: '🌡️',
+    status: 'ready',
+  },
 ];
