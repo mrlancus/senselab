@@ -44,7 +44,8 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
      `prefers-reduced-motion`.
 - Feature-detect every sensor and show a clear "not supported on this device" state.
   iOS Safari has no WebXR and no magnetometer, and needs `DeviceMotionEvent.requestPermission()`
-  from a tap.
+  (and `DeviceOrientationEvent.requestPermission()`) from a tap. Android Chrome only exposes
+  `Magnetometer` behind a flag, so the metal finder falls back to compass − gyro.
 - Request the mic with echoCancellation, noiseSuppression and autoGainControl all set to
   false, and always read back the real `AudioContext.sampleRate`.
 - When a method proves unreliable on real devices, say so in its doc and in the UI.
@@ -89,7 +90,8 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
   `fruit`; JSON payload ≤ 64 KB). `components/ImpactRecorder.tsx` records a few knocks/taps
   with a live counter (and optional motion).
 - Data loading: `useAsync(fn, key)` (`lib/useAsync.ts`). Routes go in the `screens` list in
-  `App.tsx`; the first match wins.
+  `App.tsx`; the first match wins. Screens are lazy-loaded (`named(() => import(...), 'Name')`)
+  so each mode is its own chunk; add new screens the same way.
 
 ## Status
 
@@ -100,3 +102,7 @@ before pushing; CI runs the same. Use `pnpm format` to fix prettier issues.
 - [x] Step 5: camera dimensions + waterline (synthetic-verified; WebXR AR untested on devices)
 - [x] Room acoustics RT60 (synthetic-verified)
 - [x] Knock ID + fruit firmness (synthetic-verified); examples in D1 `examples` (0002)
+- [x] Metal finder: Magnetometer |B| or compass − gyro (synthetic-verified)
+- [x] Sound alerts: smoke T3 / CO T4 + taught fingerprints (synthetic-verified)
+- [x] Presence: sonar motion + breathing rate (synthetic-verified)
+- [x] Air temperature (experimental): echo baseline → speed of sound → °C

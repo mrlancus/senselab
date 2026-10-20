@@ -722,3 +722,28 @@ label.inline {
   min-height: 3.2em;
   align-items: flex-start;
 }
+.meter-fill.hot {
+  background: var(--warn);
+}
+
+.alert-flash {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  background: var(--warn);
+  color: #fff;
+  border: none;
+  font-size: 1.2rem;
+  animation: alert-pulse 1s ease-in-out infinite alternate;
+}
+@keyframes alert-pulse {
+  to {
+    filter: brightness(1.25);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .alert-flash {
+    animation: none;
+  }
+}

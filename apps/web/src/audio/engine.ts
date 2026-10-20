@@ -217,6 +217,30 @@ class AudioEngine {
   }
 
   /**
+   * Loops `samples` seamlessly from AudioContext time `when` until stopped (presence sonar).
+   * Hold a mic lease for as long as it plays.
+   */
+  playLoop(samples: Float32Array, when: number): () => void {
+    const ctx = this.ctx;
+    if (!ctx) throw new Error('Audio not started');
+    const buf = ctx.createBuffer(1, samples.length, ctx.sampleRate);
+    buf.copyToChannel(samples as Float32Array<ArrayBuffer>, 0);
+    const node = ctx.createBufferSource();
+    node.buffer = buf;
+    node.loop = true;
+    node.connect(ctx.destination);
+    node.start(when);
+    return () => {
+      try {
+        node.stop();
+      } catch {
+        /* already stopped */
+      }
+      node.disconnect();
+    };
+  }
+
+  /**
    * Plays while recording, with about `padS` of extra capture either side. Playback is
    * scheduled on the AudioContext clock and the recording is stamped with context frames,
    * so `emitIndex` is exact (no timer jitter).
