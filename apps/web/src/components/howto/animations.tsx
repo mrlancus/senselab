@@ -284,3 +284,41 @@ export function CardOnSideAnim() {
     </svg>
   );
 }
+
+/** Knock ID: a knuckle knocks on an object; the phone listens nearby. */
+export function KnockAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <rect x="20" y="40" width="70" height="46" rx="3" className="a-box" />
+      <g className="a-knock">
+        <rect x="96" y="42" width="22" height="18" rx="7" className="a-hand" />
+        <rect x="114" y="46" width="16" height="9" rx="4" className="a-hand" />
+      </g>
+      <Ripples cx={92} cy={51} className="on-hit" />
+      <g transform="translate(132 66) scale(0.5)">
+        <Phone x={0} y={0} />
+      </g>
+    </svg>
+  );
+}
+
+/** Fruit firmness: a finger flicks a melon; weigh it too. */
+export function FruitTapAnim() {
+  return (
+    <svg viewBox="0 0 160 100" className="anim">
+      <ellipse cx="78" cy="58" rx="40" ry="30" className="a-melon" />
+      <path
+        d="M48 44 q30 -14 60 0 M42 58 q36 -10 72 0 M48 72 q30 8 60 0"
+        className="a-melon-stripe"
+      />
+      <g className="a-pen">
+        <rect x="118" y="2" width="5" height="40" rx="2" className="a-pen-body" />
+        <path d="M118 42 l2.5 6 l2.5 -6 z" className="a-pen-tip" />
+      </g>
+      <Ripples cx={116} cy={50} className="on-hit" />
+      <text x="20" y="96" className="a-label">
+        + weigh it (kg)
+      </text>
+    </svg>
+  );
+}

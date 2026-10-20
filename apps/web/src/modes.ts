@@ -24,9 +24,10 @@ export const modes: ModeInfo[] = [
   {
     path: '/knock',
     title: 'Knock ID',
-    blurb: 'Identify objects by the sound of a knock.',
+    blurb:
+      'Teach it what things sound like when knocked, then tell them apart. Fruit firmness too.',
     icon: '✊',
-    status: 'soon',
+    status: 'ready',
   },
   {
     path: '/room',

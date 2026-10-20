@@ -473,3 +473,34 @@
     opacity: 1;
   }
 }
+
+.a-box {
+  fill: var(--surface);
+  stroke: var(--text);
+  stroke-width: 2;
+}
+/* Knock: the fist moves in and hits at 50 % of the cycle, with the on-hit ripples. */
+.a-knock {
+  animation: a-knock 1.6s ease-in infinite;
+}
+@keyframes a-knock {
+  0%,
+  30%,
+  62%,
+  100% {
+    transform: translateX(16px);
+  }
+  50% {
+    transform: translateX(0);
+  }
+}
+.a-melon {
+  fill: #3f8f4a;
+  stroke: var(--text);
+  stroke-width: 1.5;
+}
+.a-melon-stripe {
+  fill: none;
+  stroke: #2a6a33;
+  stroke-width: 3;
+}

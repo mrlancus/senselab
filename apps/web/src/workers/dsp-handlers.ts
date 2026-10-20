@@ -5,6 +5,9 @@ import {
   analyzeSweep,
   analyzeTaps,
   crossCorrelate,
+  detectOnsets,
+  estimateResonance,
+  knockFeatures,
   echoResponse,
   envelope,
   magnitudeSpectrum,
@@ -69,6 +72,41 @@ export const handlers = {
     };
   },
   analyzeRoom: (x: Float32Array, sampleRate: number) => analyzeRoom(x, sampleRate),
+  /** Every knock in a recording: its onset, features, and (debug) its band levels. */
+  knocks: (x: Float32Array, sampleRate: number, imuPeaks: (number | null)[] = []) => {
+    const onsets = detectOnsets(x, sampleRate, { minGapS: 0.25 });
+    return onsets.map((o, i) => {
+      const end = Math.min(
+        x.length,
+        onsets[i + 1]?.sample ?? x.length,
+        o.sample + Math.round(0.3 * sampleRate),
+      );
+      return {
+        onsetS: o.time,
+        features: knockFeatures(x.subarray(o.sample, end), sampleRate, imuPeaks[i] ?? null),
+      };
+    });
+  },
+  /** Fruit: the first strong resonance of each tap, 60–1500 Hz. */
+  fruitTaps: (x: Float32Array, sampleRate: number) => {
+    const onsets = detectOnsets(x, sampleRate, { minGapS: 0.25 });
+    return onsets
+      .map((o) => {
+        const r = estimateResonance(
+          x.subarray(o.sample, Math.min(x.length, o.sample + Math.round(0.25 * sampleRate))),
+          sampleRate,
+          {
+            fMin: 60,
+            fMax: 1500,
+            windowS: 0.2,
+          },
+        );
+        return r && r.snrDb > 10
+          ? { onsetS: o.time, frequency: r.frequency, snrDb: r.snrDb, q: r.q }
+          : null;
+      })
+      .filter((v): v is NonNullable<typeof v> => v != null);
+  },
 };
 
 export type Handlers = typeof handlers;
