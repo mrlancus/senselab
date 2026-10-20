@@ -11,7 +11,15 @@ export const DEVICE_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 /** Recording uploads are capped so a mistaken upload can't run up R2 storage. */
 export const MAX_RECORDING_BYTES = 50 * 1024 * 1024;
 
-export const recordingModes = ['tap', 'echo', 'camera', 'sensor-check', 'knock', 'other'] as const;
+export const recordingModes = [
+  'tap',
+  'echo',
+  'camera',
+  'sensor-check',
+  'knock',
+  'room',
+  'other',
+] as const;
 export type RecordingMode = (typeof recordingModes)[number];
 
 export interface ApiError {
