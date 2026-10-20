@@ -27,6 +27,10 @@ export function echoConfig(sampleRate: number): EchoConfig & { kind: ChirpBand['
   return { sampleRate, f0: band.f0, f1: band.f1, kind: band.kind };
 }
 
+/** Fired when a reference is saved or cleared, so every echo card on the page refreshes. */
+export const REFERENCE_EVENT = 'senselab-echo-reference';
+const announce = () => window.dispatchEvent(new Event(REFERENCE_EVENT));
+
 const refKey = (c: EchoConfig) => `senselab.echoRef.${c.sampleRate}.${c.f0}.${c.f1}`;
 
 export interface StoredReference {
@@ -51,6 +55,7 @@ export function saveReference(c: EchoConfig, corr: Float64Array) {
   } catch {
     /* private mode: the reference lasts this session only */
   }
+  announce();
 }
 
 export function clearReference(c: EchoConfig) {
@@ -59,6 +64,7 @@ export function clearReference(c: EchoConfig) {
   } catch {
     /* ignore */
   }
+  announce();
 }
 
 const TEMP_KEY = 'senselab.airTempC';

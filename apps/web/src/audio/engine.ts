@@ -1,9 +1,13 @@
 import workletUrl from './recorder.worklet.ts?worker&url';
 
 /**
- * One AudioContext + one raw microphone stream for the whole app. Created lazily from a
- * user gesture (required on iOS). All voice processing is switched off and we read back
- * what the browser actually gave us.
+ * One AudioContext + one raw microphone stream for the whole app. All voice processing is
+ * switched off and we read back what the browser actually gave us.
+ *
+ * The mic is only open while something needs it. Callers take a lease (`withMic`, or
+ * `acquire` for open-ended use like a live level meter); when the last lease is released
+ * the tracks are stopped, so the browser's "microphone in use" indicator goes away, and the
+ * AudioContext is suspended. Opening again is quick once permission has been granted.
  */
 
 export interface MicInfo {
@@ -18,6 +22,14 @@ export interface MicInfo {
 /** `frame` is the AudioContext frame index of `chunk[0]`. */
 type Listener = (chunk: Float32Array, frame: number) => void;
 
+export interface MicLease {
+  info: MicInfo;
+  release: () => void;
+}
+
+/** Wait this long after the last release before closing, so back-to-back taps don't flap. */
+const CLOSE_AFTER_MS = 800;
+
 export interface PlayRecordResult {
   recorded: Float32Array;
   /**
@@ -31,18 +43,67 @@ class AudioEngine {
   ctx: AudioContext | null = null;
   private stream: MediaStream | null = null;
   private node: AudioWorkletNode | null = null;
+  private src: MediaStreamAudioSourceNode | null = null;
   private listeners = new Set<Listener>();
   /** AudioContext frame just after the last sample received from the worklet. */
   framesSeen = 0;
   info: MicInfo | null = null;
+  private leases = 0;
+  private closeTimer: ReturnType<typeof setTimeout> | null = null;
+  private moduleFor: AudioContext | null = null;
+  private opening: Promise<MicInfo> | null = null;
 
   get running() {
     return !!this.node;
   }
 
-  /** Must be called from a user gesture (tap) the first time. */
-  async start(): Promise<MicInfo> {
-    if (this.info && this.ctx?.state === 'running') return this.info;
+  /** Opens the mic (from a tap the first time, for iOS) and holds it until released. */
+  async acquire(): Promise<MicLease> {
+    this.leases++;
+    if (this.closeTimer) clearTimeout(this.closeTimer);
+    this.closeTimer = null;
+    try {
+      this.opening ??= this.open();
+      const info = await this.opening;
+      let released = false;
+      return {
+        info,
+        release: () => {
+          if (released) return;
+          released = true;
+          this.releaseOne();
+        },
+      };
+    } catch (e) {
+      this.releaseOne();
+      throw e;
+    } finally {
+      this.opening = null;
+    }
+  }
+
+  /** Runs `fn` with the mic open, and releases it afterwards whatever happens. */
+  async withMic<T>(fn: (info: MicInfo) => Promise<T>): Promise<T> {
+    const lease = await this.acquire();
+    try {
+      return await fn(lease.info);
+    } finally {
+      lease.release();
+    }
+  }
+
+  private releaseOne() {
+    this.leases = Math.max(0, this.leases - 1);
+    if (this.leases === 0 && !this.closeTimer) {
+      this.closeTimer = setTimeout(() => {
+        this.closeTimer = null;
+        if (this.leases === 0) void this.stop();
+      }, CLOSE_AFTER_MS);
+    }
+  }
+
+  private async open(): Promise<MicInfo> {
+    if (this.info && this.stream && this.ctx?.state === 'running') return this.info;
     // iOS 17+: ask for a play-and-record session so speaker and mic work together.
     const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
     if (session) {
@@ -72,8 +133,11 @@ class AudioEngine {
       });
     }
     if (!this.node) {
-      await this.ctx.audioWorklet.addModule(workletUrl);
-      const src = this.ctx.createMediaStreamSource(this.stream);
+      if (this.moduleFor !== this.ctx) {
+        await this.ctx.audioWorklet.addModule(workletUrl);
+        this.moduleFor = this.ctx;
+      }
+      const src = (this.src = this.ctx.createMediaStreamSource(this.stream));
       this.node = new AudioWorkletNode(this.ctx, 'senselab-recorder', {
         numberOfInputs: 1,
         numberOfOutputs: 1,
@@ -153,6 +217,30 @@ class AudioEngine {
   }
 
   /**
+   * Loops `samples` seamlessly from AudioContext time `when` until stopped (presence sonar).
+   * Hold a mic lease for as long as it plays.
+   */
+  playLoop(samples: Float32Array, when: number): () => void {
+    const ctx = this.ctx;
+    if (!ctx) throw new Error('Audio not started');
+    const buf = ctx.createBuffer(1, samples.length, ctx.sampleRate);
+    buf.copyToChannel(samples as Float32Array<ArrayBuffer>, 0);
+    const node = ctx.createBufferSource();
+    node.buffer = buf;
+    node.loop = true;
+    node.connect(ctx.destination);
+    node.start(when);
+    return () => {
+      try {
+        node.stop();
+      } catch {
+        /* already stopped */
+      }
+      node.disconnect();
+    };
+  }
+
+  /**
    * Plays while recording, with about `padS` of extra capture either side. Playback is
    * scheduled on the AudioContext clock and the recording is stamped with context frames,
    * so `emitIndex` is exact (no timer jitter).
@@ -179,12 +267,24 @@ class AudioEngine {
     }
   }
 
+  /** Closes the mic now (stops its tracks) and suspends audio, whatever leases remain. */
   async stop() {
+    this.src?.disconnect();
+    this.src = null;
     this.node?.disconnect();
     this.node = null;
     this.stream?.getTracks().forEach((t) => t.stop());
     this.stream = null;
     this.info = null;
+    // Give iOS back its normal audio routing (play-and-record can favour the earpiece).
+    const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+    if (session) {
+      try {
+        session.type = 'auto';
+      } catch {
+        /* older Safari */
+      }
+    }
     await this.ctx?.suspend();
   }
 }
@@ -213,3 +313,6 @@ export function concat(chunks: Float32Array[]): Float32Array {
 }
 
 export const audio = new AudioEngine();
+
+// Lets browser E2E checks confirm the mic is closed when idle (`__senselabAudio.running`).
+(globalThis as { __senselabAudio?: AudioEngine }).__senselabAudio = audio;

@@ -20,7 +20,7 @@ import { useAsync } from '../../lib/useAsync';
 import { ConfidencePill } from './ConfidencePill';
 import { EchoCalibrate, EchoMeasure } from './EchoLevel';
 
-type Method = 'tap' | 'echo';
+type Method = 'tap' | 'echo' | 'camera';
 const UNIT: Record<string, string> = { tap: 'Hz', echo: 'cm', camera: 'cm' };
 
 export function ContainerDetail({ id }: { id: string }) {
@@ -86,7 +86,7 @@ function DetailView({ c, reload }: { c: Detail; reload: () => void }) {
       </div>
 
       <div className="segmented" role="tablist" aria-label="Method">
-        {(['tap', 'echo'] as const).map((m) => (
+        {(['tap', 'echo', 'camera'] as const).map((m) => (
           <button
             key={m}
             role="tab"
@@ -94,12 +94,27 @@ function DetailView({ c, reload }: { c: Detail; reload: () => void }) {
             className={method === m ? 'on' : ''}
             onClick={() => setMethod(m)}
           >
-            {m === 'tap' ? '🥄 Tap pitch' : '📡 Echo'}
+            {m === 'tap' ? '🥄 Tap' : m === 'echo' ? '📡 Echo' : '📷 Camera'}
           </button>
         ))}
       </div>
 
-      <div className="segmented" role="tablist">
+      {method === 'camera' && (
+        <div className="card stack">
+          <p>
+            The camera measures the bucket's inside dimensions (a bank card is the ruler), and for
+            translucent buckets, the water level through the wall.
+          </p>
+          <Link href={`/level/${c.id}/camera`} className="button block">
+            Measure dimensions
+          </Link>
+          <Link href={`/level/${c.id}/waterline`} className="button block">
+            Waterline photo (translucent buckets)
+          </Link>
+        </div>
+      )}
+
+      <div className="segmented" role="tablist" hidden={method === 'camera'}>
         <button
           role="tab"
           aria-selected={mode === 'measure'}

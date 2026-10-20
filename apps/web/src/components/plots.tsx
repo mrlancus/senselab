@@ -139,16 +139,24 @@ export function LinePlot({
       ctx.strokeStyle = cssVar('--accent');
       ctx.lineWidth = 1.25;
       ctx.beginPath();
-      const per = Math.max(1, y.length / w);
-      for (let x = 0; x < w; x++) {
-        const a = Math.floor(x * per);
-        const b = Math.min(y.length, Math.floor((x + 1) * per));
-        let m = -Infinity;
-        for (let i = a; i < Math.max(a + 1, b); i++) m = Math.max(m, y[Math.min(i, y.length - 1)]!);
-        const px = (x / w) * w;
-        if (x === 0) ctx.moveTo(px, toY(m));
-        else ctx.lineTo(px, toY(m));
-        if (y.length < w && b >= y.length) break;
+      if (y.length <= w) {
+        // Short series: stretch the points across the full width.
+        for (let i = 0; i < y.length; i++) {
+          const px = y.length > 1 ? (i / (y.length - 1)) * w : 0;
+          if (i === 0) ctx.moveTo(px, toY(y[i]!));
+          else ctx.lineTo(px, toY(y[i]!));
+        }
+      } else {
+        // Long series: the max of each pixel column, so peaks never disappear.
+        const per = y.length / w;
+        for (let x = 0; x < w; x++) {
+          const a = Math.floor(x * per);
+          const b = Math.min(y.length, Math.floor((x + 1) * per));
+          let m = -Infinity;
+          for (let i = a; i < Math.max(a + 1, b); i++) m = Math.max(m, y[i]!);
+          if (x === 0) ctx.moveTo(x, toY(m));
+          else ctx.lineTo(x, toY(m));
+        }
       }
       ctx.stroke();
       const xMax = x0 + dx * (y.length - 1);
